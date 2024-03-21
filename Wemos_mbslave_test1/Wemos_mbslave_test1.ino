@@ -8,9 +8,9 @@
 #define MB_RATE 115200        // скорость обмена по модбас
 #define MB_FC SERIAL_8E1      // параметры контроля передачи модбас
 
-//#define LED_DATA D6
+#define LED_DATA D6
 
-#define LED_DATA LED_BUILTIN
+//#define LED_DATA LED_BUILTIN
 
 //константы адреса модбас регистра -1 для правильного отображения в mbpool
 
