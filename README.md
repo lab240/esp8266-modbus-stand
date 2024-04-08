@@ -31,7 +31,7 @@
 Address device - 1  
 
 Wait new adress  
-* command for set new address: set-xxx (001-127)  
+* command for set new address: seta=xxx (001-127)  
 0...  1...  2...  3...  4...  5...    
 
 ```
