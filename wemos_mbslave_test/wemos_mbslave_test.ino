@@ -24,7 +24,10 @@
 #define REGNM 3-1
 #define REGNS 4-1
 
-int regs5[]={4,5,6,7,8,9};
+#define EXTRAREGS 5 
+
+int REGS[]={4,5,6,7,8,9};
+
 
 ModbusRTU mb;                 // объект для взаимодействия с либой ModbusRTU
 
@@ -163,7 +166,7 @@ void setup() {
   
   debug(DCOMMON, "Start programm with Modbus address->"+String(modbus_address), TOUT);
   debug(DCOMMON, "Switching Serial port to hardware mode, finish serial input/output operations");
- 
+
   ::delay(200);  // дожидаемся окончания передач в уарт
   
  
@@ -186,9 +189,10 @@ void setup() {
   mb.Hreg(REGNM, 0); //обнуление данных регистра минут
   mb.Hreg(REGNS, 0); //обнуление данных регистра секунд
 
-for(int i=0; i<=5; i++){
-    mb.Hreg(regs5[i],0);
-}
+  for(int i=0; i<=EXTRAREGS; i++){
+    mb.addHreg(REGS[i]);
+    mb.Hreg(REGS[i],0);
+  }
 
 //callback when request comes
   mb.onGetHreg(0,cbReadHreg,4);
@@ -216,8 +220,8 @@ void regTime (void){
   mb.Hreg(REGNS, timeSecs);
 
 
-  for(int i=0; i<=5; i++){
-     mb.Hreg(regs5[i],random(1,32000));
+  for(int i=0; i<=EXTRAREGS; i++){
+     mb.Hreg(REGS[i],random(1,32000));
     //mb.Hreg(regs5[i],5);
   }
 
