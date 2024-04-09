@@ -1,132 +1,85 @@
+
+#ifndef mbslave
+#define mbslave 
+
 #include "Arduino.h"
-
-#define EEPROM_SALT 1664
-#define MEM_SIZE 512
-#define debug_level 1
-
-#define DCOMMAND "COMMNAD"
-#define DERROR "ERROR"
-#define DEEPROM "EEPROM"
-#define DCOMMON "MAIN"
-
-#define TERROR 1
-#define TOUT 4
-
-typedef struct {
-  
-  // ** from web config
-  int   salt = EEPROM_SALT;
-  char  mqttServer[22]  = "mqtt.lab240.ru";
-  char  mqttUser[12] = "";
-  char  mqttPass[22]    = "";
-  char  mqttPort[6]="1883";
-  char  autooff[2] = "";
-  char  dev_id[10]="empty_dev";
-
-  // *** params config
-  uint      autostop_sec=0;
-  uint      autostop_sec2=0;
-  uint      autooff_hours=0;
-  bool      autoreboot_on_max_attempts=0; //reboot on MAX_CONNECT_ATTEMPTS_BEFORE_RESET (default 0)
-  bool      notifyer_onoff=0;
-  bool      current_check=1;
-  uint      lscheme_num=0;
-  uint      lscheme_num2=0;
-  uint      time_zone=3; //3 for Moscow //2 for Riga
-  bool      start_on=0;
-//                             0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
-  bool     custom_array1[24]={0,0,0,0,0,0,0,0,0,0,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0};
-  bool     custom_array2[24]={1,1,1,1,1,1,1,1,1,1,1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  //uint      custom_scheme2=0B101010101010101010101010;
-  int      custom_level_notify1=-128;
-  bool     baselog=1;
-  
-// ** hotter \ cooler 
-  uint8_t      hotter=0;
-  bool      cooler=0;
-
-// ** temp level
-  uint      default_temp_level=20;
-  uint      day_temp_level=18;
-  uint      night_temp_level=21;
-  /*     */
-
-  uint      schm_onoff_num1=99;
-  uint      schm_onoff_num2=0; //not use
-  uint      level_delta=10;  //delta in Celsius*10
-
-  bool      notifyer=0;
-  char      email_notify[50]="dj.novikov@gmail.com";
-  uint      hours_on_notify=6; //notify period in hours
-  int      temp_low_level_notify=-128;
-  int      analog_level_notify1=-128;
-  int      analog_level_notify2=-128;
-  int      temp_high_level_notify=-128;
-  uint      autooff_hours2=0;
-// ** 
-  int      custom_level_notify2=-128;
-  int      custom_level_notify3=-128;
-  int      custom_level_notify4=-128;
-  uint8_t      urgent_off=75;
-  uint      tariff=500;      // копееек \ центов за 1квт\ч
-  unsigned long      ucounter=0;  //счетчик потребления в рублях\долл\евр
-  uint weekschm[7]={99,99,99,99,99,99,99};
-  //*****
-  int     custom_level3=-128;
-  int     custom_level4=-128;
-  int     custom_level1=-128;
-  int     custom_level2=-128;
-  //uint    hotter2=0;
-  //int     custom_hotter2[24]={22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22};
-  uint cb_schm1=0B000000000011111111111100;
-  uint cb_schm2=0B111111111111100000000000;
-  int     temp_matrix[24]={22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,21};
-} WMSettings;
+#include "mbase.h"
 
 
-void eload(WMSettings* _s){
-    EEPROM.begin(MEM_SIZE);
-    EEPROM.get(0, *_s);
-    EEPROM.end();
-};
+#define NUM_TRY 10
 
-template <typename T>
-void debug(String sourceStr, T debug,  int type=4, String preStr="") {
-    //Serial.print("dl:"+String (debug_level));
-    if (debug_level > 0){
-       switch(type){
-        case 0:
-          Serial.print("<UDEF>");
-          break;
-        case 1:
-          Serial.print("<!ERROR!>");
-          break;
-        case 2:
-          Serial.print("<WARNING>");
-          break;
-        case 3: 
-          Serial.print("<INFO>");
-          break;
-        case 4: 
-          Serial.print("<OUT>");
-          break;
+#define MAX_ID 127            // максимально допустимый адрес модбас
+
+
+
+String get_command_str(){
+  int is_cmd=0;
+  //int is_cmd_l=0;
+  int count_try=0;
+  uint32_t softTimer = 0; 
+  char inCommand[50] = {0};    // заводим массив для захвата команды задания адреса
+  uint8_t counterByte = 0;      // указатель для записи команды в массив
+
+  while(is_cmd==0 && count_try<NUM_TRY){  // цикл таймаута для задания адреса
+
+    Serial.print(count_try,DEC);
+    Serial.print("...\t");  // печатаем секунды таймаута
+
+    softTimer = millis() + 1000;                  // назначаем таймер на 1с
+
+    int incoming_flg=0;
+    while(softTimer > (millis())){                // крутимся в цикле пока время меньше заданного таймаута
+      if (Serial.available() > 0) {               // если доступны данные из порта
+        inCommand[counterByte]=Serial.read();      // принимаем в массив по указателю
+        if(counterByte < 520) counterByte++;          // но не более 20 значений от 0 
+        else counterByte = 0;
+        incoming_flg=1;                      // иначе сбрасываем счетчик
       }
+    }
+
+    if(incoming_flg) is_cmd=1;
+    count_try++;
+  }
+  return String(inCommand);
+}
+
+int do_command(WMSettings *_s, String cmdStr, String valStr){
+  
+  if (cmdStr == "seta"){ // проверяем первые 4 символа на соответствие команде 
+            
+      uint newAdress=0;
+      if((newAdress=valStr.toInt()) == 0 ){
+        debug(DCOMMAND, "Failed convert address to int value",1);
+      }
+
+      if (0 < newAdress && newAdress <= MAX_ID ){   // проверяем на соответствие диапазону 0...127
+        _s->custom_level1=newAdress;
+        debug(DCOMMAND, "Set new address ->" +String(newAdress));
+        esave(_s);
+        debug(DEEPROM, "New settings saved to EEPROM->"+String(_s->custom_level1));        
+        return 0;             // подтверждаем запись
+      }
+      else{ 
+        // не попали в диапазон - пишем ошибку
+        debug(DCOMMAND, "Wrong address range !",1);    
+        debug(DCOMMAND, "New address not selected or recognized, leave old address ->"+String(_s->custom_level1),4);
+        return 2;
+      }             
+    }
     
-      }
-      //type!=4 ? Serial.print("DEBUG:") : Serial.print("OUTPUT:");
-      Serial.print(sourceStr); 
-      Serial.print(":");
-      if(preStr!="") Serial.print(preStr+"->");
-      Serial.print(debug);
-      Serial.println();
-};
+    if (cmdStr == "setap"){
+      debug(DCOMMAND, "Something do with->" + String(cmdStr));
+      return 0;
+    }
+    
+    if (cmdStr == "setp"){
+       debug(DCOMMAND, "Something do with->" + String(cmdStr));
+       return 0;
+    }
+    // если команды = не поступило
+      debug(DCOMMAND, "Unknown command with = ->"+cmdStr+"="+valStr,TERROR);
+      return 1;
+  };
 
-
-void esave(WMSettings* _s){
-     debug("SAVE", "Lets' save");
-     EEPROM.begin(MEM_SIZE);
-     EEPROM.put(0, *_s);
-     EEPROM.commit();
-     EEPROM.end();     
-};
+#endif
 

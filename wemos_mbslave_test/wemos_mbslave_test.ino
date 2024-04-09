@@ -5,18 +5,15 @@
 
 #define DEBUG 1
 
-#define MAX_ID 127            // максимально допустимый адрес модбас
+
 #define MB_RATE 115200        // скорость обмена по модбас
 #define MB_FC SERIAL_8E1      // параметры контроля передачи модбас
-
-
 
 //#define LED_DATA D6
 
 #define LED_DATA LED_BUILTIN
 
 //константы адреса модбас регистра -1 для правильного отображения в mbpool
-
 #define NUM_TRY 10
 
 #define REGNA 1-1
@@ -28,6 +25,7 @@
 
 int REGS[]={4,5,6,7,8,9};
 
+#define modbus_address settings.custom_level1
 
 ModbusRTU mb;                 // объект для взаимодействия с либой ModbusRTU
 
@@ -40,17 +38,13 @@ uint32_t softTimer = 0;       // переменная для захвата те
 uint32_t get_counter = 0;   
 uint led_mode_setup;
 
-#define modbus_address settings.custom_level1
-
 uint16_t cbReadHreg(TRegister* reg, uint16_t numregs){
   digitalWrite(LED_DATA,HIGH);
   return reg->value;
 }
 
 void setup() {
-  uint8_t counterByte = 0;      // указатель для записи команды в массив
-  char inCommand[50] = {0};    // заводим массив для захвата команды задания адреса
-  String inCommandStr="";
+ 
   led_mode_setup =1;
 
   pinMode(LED_DATA, OUTPUT);
@@ -62,114 +56,62 @@ void setup() {
 
   eload(&settings);
 
-    debug(DEEPROM, "Salt="+String(settings.salt)+"; Address="+String(modbus_address));
+  debug(DEEPROM, "Salt="+String(settings.salt)+"; Address="+String(modbus_address));
 
   if (settings.salt != EEPROM_SALT || modbus_address > MAX_ID) {
     debug(DEEPROM, "Invalid settings in EEPROM, trying with defaults",TERROR);
     WMSettings defaults;
     settings = defaults;
     modbus_address=126; //по умолчанию пусть будет 126й адрес
-    debug(DEEPROM, "Salt="+String(settings.salt)+"; Address="+String(modbus_address));
+    debug(DEEPROM, "Salt="+String(settings.salt)+"; Address="+String(modbus_address), TDEBUG);
     
   }
 
   // инициализируем уарт с параметрами стандартного монитора порта
 
-  Serial.println("\n");
-  Serial.print("Address device - ");
-  Serial.println(modbus_address, DEC);       // печатаем текущий адрес устройства
+  debug(DENTER,0);
 
-  Serial.println("");
-  Serial.println("Wait new adress");
-  Serial.println("* command for set new address: seta=xxx (001-127)");
+  debug(DMAIN, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
+  debug(DMAIN, "seta=<ADDRESS> (1..127)");
+  debug(DMAIN, "---------------------------------------------------------------------------------------");
+  debug(DENTER,0);
 
-  int is_cmd=0;
-  //int is_cmd_l=0;
-  int count_try=0;
+  String inCommandStr=""; 
+  bool stop_commnads=0;
+//цикл приема команд
 
-  while(is_cmd==0 && count_try<NUM_TRY){  // цикл таймаута для задания адреса
+  while (!stop_commnads){
 
-    Serial.print(count_try,DEC);
-    Serial.print("...\t");  // печатаем секунды таймаута
-
-    softTimer = millis() + 1000;                  // назначаем таймер на 1с
-
-    int incoming_flg=0;
-    while(softTimer > (millis())){                // крутимся в цикле пока время меньше заданного таймаута
-      if (Serial.available() > 0) {               // если доступны данные из порта
-        inCommand[counterByte]=Serial.read();      // принимаем в массив по указателю
-        if(counterByte < 520) counterByte++;          // но не более 20 значений от 0 
-        else counterByte = 0;
-        incoming_flg=1;                      // иначе сбрасываем счетчик
-      }
-    }
-
-    if(incoming_flg) is_cmd=1;
-    count_try++;
-  }
-
-  Serial.println("\n");
-
-  if(is_cmd){
-    debug(DCOMMAND, "Received incoming string->"+String(inCommand));
-    //debug(DCOMMAND, "\n Commnad Recognized", TOUT);
-    //debug(DCOMMAND, "incommand->"+String(inCommand));
-    inCommandStr=String(inCommand);
-    String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
-    String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
-    debug(DCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
-
-    if (cmdStr == "seta"){ // проверяем первые 4 символа на соответствие команде 
-      //Serial.println("");
-      //Serial.print("New adress set - ");
-      //uint32_t newAdress = ((inCommand[4]-'0')*100)+((inCommand[5]-'0')*10)+(inCommand[6]-'0');  //переводим символы в цифры
-           
-      
-      uint newAdress=0;
-      if((newAdress=numStr.toInt()) == 0 ){
-        debug(DCOMMAND, "Failed convert address to int value",1);
-      }
-
-      if (0 < newAdress && newAdress <= MAX_ID ){   // проверяем на соответствие диапазону 0...127
-        modbus_address=newAdress;
-        debug(DCOMMAND, "Set new address ->" +String(newAdress));
-        esave(&settings);
-        debug(DEEPROM, "New settings saved to EEPROM->"+String(modbus_address));                     // подтверждаем запись
-      }
-      else{ 
-        // не попали в диапазон - пишем ошибку
-        debug(DCOMMAND, "Wrong address range !",1);    
-        debug(DCOMMAND, "New address not selected or recognized, leave old address ->"+String(modbus_address),4);
-      }             
-    }
-    else if (cmdStr == "setap"){
-      debug(DCOMMAND, "Something do with->" + String(cmdStr));
-    }
-    else if (cmdStr == "setp"){
-       debug(DCOMMAND, "Something do with->" + String(cmdStr));
-    }
-    else{  
-      // если команды = не поступило
-      debug(DCOMMAND, "Comand is not recognized->"+cmdStr,TERROR);
-    }
+    inCommandStr=get_command_str();
+    Serial.println("\n");
     
-  }else{
-    debug(DCOMMON, "No incomming string");
+    if(inCommandStr!=""){
+      debug(DCOMMAND, "Received incoming string->"+String(inCommandStr));
+      if(inCommandStr.indexOf('=')!=-1){
+        String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
+        String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
+        debug(DCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
+        do_command(&settings, cmdStr, numStr);
+      }else{
+        debug(DCOMMAND, "Commnad is not recognized", TOUT);
+      }
+    
+    }else{
+      debug(DCOMMAND, "No incomming string");
+      stop_commnads=1;
+    }
+
   }
-  /*
-  if(inCommand[0]){
-    Serial.println(""); 
-    for(uint8_t i = 0; i < 9; i++) Serial.print(inCommand[i]); // DEBUG - эхо ввода команды
-  }
-  */
-  
-  
-  debug(DCOMMON, "Start programm with Modbus address->"+String(modbus_address), TOUT);
-  debug(DCOMMON, "Switching Serial port to hardware mode, finish serial input/output operations");
+    
+  debug(DENTER,0); // \n
+
+  debug(DMAIN, "------ Start modbus emulation ------");
+  debug(DMAIN, "Start programm with Modbus address->"+String(modbus_address), TOUT);
+  debug(DMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
+  debug(DMAIN, "-------------------------------------");
 
   ::delay(200);  // дожидаемся окончания передач в уарт
   
- 
 
   Serial.begin(MB_RATE, MB_FC); // инициализация уарт с настройками для Модбас
   pinMode(D1, OUTPUT);
