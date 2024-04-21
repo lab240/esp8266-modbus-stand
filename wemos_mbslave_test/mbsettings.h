@@ -1,5 +1,5 @@
-#ifndef mbsettings
-#define mbsttings
+#ifndef __mbsettings__
+#define __mbsttings__
 
 #include "Arduino.h"
 

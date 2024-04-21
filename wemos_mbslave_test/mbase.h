@@ -1,5 +1,5 @@
-#ifndef mbase
-#define mbase 
+#ifndef __mbase__
+#define __mbase__
 
 #include "Arduino.h"
 #include "mbsettings.h"

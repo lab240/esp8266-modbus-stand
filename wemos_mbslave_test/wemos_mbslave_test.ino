@@ -16,16 +16,21 @@
 //константы адреса модбас регистра -1 для правильного отображения в mbpool
 #define NUM_TRY 10
 
-#define REGNA 1-1
-#define REGNH 2-1
-#define REGNM 3-1
-#define REGNS 4-1
-
 #define EXTRAREGS 5 
 
-int REGS[]={4,5,6,7,8,9};
+#define MAXEXTRAREGS 255 
+
+int mb_intregs[MAXEXTRAREGS];
+int mb_coilregs[MAXEXTRAREGS];
 
 #define modbus_address settings.custom_level1
+#define intregs_amount settings.custom_level2
+#define coilregs_amount settings.custom_level3
+
+#define DEFAULT_ADDRESS 126
+#define DEFAULT_INT_REGS 10
+#define DEFAULT_COIL_REGS 10
+
 
 ModbusRTU mb;                 // объект для взаимодействия с либой ModbusRTU
 
@@ -62,7 +67,10 @@ void setup() {
     debug(DEEPROM, "Invalid settings in EEPROM, trying with defaults",TERROR);
     WMSettings defaults;
     settings = defaults;
-    modbus_address=126; //по умолчанию пусть будет 126й адрес
+    modbus_address=DEFAULT_ADDRESS; //по умолчанию пусть будет 126й адрес
+    intregs_amount=DEFAULT_INT_REGS;
+    coilregs_amount=DEFAULT_COIL_REGS;
+
     debug(DEEPROM, "Salt="+String(settings.salt)+"; Address="+String(modbus_address), TDEBUG);
     
   }
@@ -121,23 +129,28 @@ void setup() {
   mb.begin(&Serial);  //указание порта для модбас
   mb.slave(modbus_address); // указание адреса устройства в протоколе модбас
 
-  mb.addHreg(REGNA); // добавление регистра с адресом устройства
-  mb.addHreg(REGNH); // добавление регистра часов
-  mb.addHreg(REGNM); // добавление регистра минут
-  mb.addHreg(REGNS); // добавление регистра секунд
+  // mb.addHreg(REGNA); // добавление регистра с адресом устройства
+  // mb.addHreg(REGNH); // добавление регистра часов
+  // mb.addHreg(REGNM); // добавление регистра минут
+  // mb.addHreg(REGNS); // добавление регистра секунд
 
-  mb.Hreg(REGNA, 0); //обнуление данных регистра адреса
-  mb.Hreg(REGNH, 0); //обнуление данных регистра часов
-  mb.Hreg(REGNM, 0); //обнуление данных регистра минут
-  mb.Hreg(REGNS, 0); //обнуление данных регистра секунд
+  // mb.Hreg(REGNA, 0); //обнуление данных регистра адреса
+  // mb.Hreg(REGNH, 0); //обнуление данных регистра часов
+  // mb.Hreg(REGNM, 0); //обнуление данных регистра минут
+  // mb.Hreg(REGNS, 0); //обнуление данных регистра секунд
 
-  for(int i=0; i<=EXTRAREGS; i++){
-    mb.addHreg(REGS[i]);
-    mb.Hreg(REGS[i],0);
+  for(int i=0; i<=intregs_amount; i++){
+    mb.addHreg(mb_intregs[i]); //add register
+    mb.Hreg(mb_intregs[i],0);  //add 0 to each reg
+  }
+
+   for(int i=0; i<=coilregs_amount; i++){
+    mb.addCoil(mb_coilregs[i]); //add register
+    mb.Coil(mb_coilregs[i],0);  //add 0 to each reg
   }
 
 //callback when request comes
-  mb.onGetHreg(0,cbReadHreg,4);
+  mb.onGetHreg(0,cbReadHreg,intregs_amount);
 
   led_mode_setup=0; //finish setup blinking
 }
@@ -156,20 +169,24 @@ void regTime (void){
   uint16_t timeSecs = (sec % 3600ul) % 60ul;  // секунды
 
   // заполняем реги значениями времени
-  mb.Hreg(REGNA, modbus_address); 
-  mb.Hreg(REGNH, timeHours);
-  mb.Hreg(REGNM, timeMins);
-  mb.Hreg(REGNS, timeSecs);
+  mb.Hreg(mb_intregs[0], modbus_address); 
+  mb.Hreg(mb_intregs[1], timeHours);
+  mb.Hreg(mb_intregs[2], timeMins);
+  mb.Hreg(mb_intregs[3], timeSecs);
 
+  //next regs are random
 
-  for(int i=0; i<=EXTRAREGS; i++){
-     mb.Hreg(REGS[i],random(1,32000));
-    //mb.Hreg(regs5[i],5);
+  for(int i=4; i<=intregs_amount; i++){
+     mb.Hreg(mb_intregs[i],random(1,32000));
   }
+
+   for(int i=0; i<=coilregs_amount; i++){
+     mb.Coil(mb_coilregs[i],random(0,1));
+  }
+
 
   softTimer= millis() + 500; // перевзводим на полсекунды
 } 
-
 
 void tickf(){
   if(led_mode_setup) {

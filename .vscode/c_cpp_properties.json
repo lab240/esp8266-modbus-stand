@@ -19,7 +19,7 @@
             "includePath": [
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/tools/sdk/include",
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/tools/sdk/lwip2/include",
-                "/tmp/arduino/sketches/DBAD170B32B5EFC3F16D0754BCB4C9CA/core",
+                "/tmp/arduino/sketches/A60C3848593392BB23591EAD8FB2F722/core",
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/cores/esp8266",
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/variants/d1_mini",
                 "/home/dmn/Arduino/libraries/modbus-esp8266/src",

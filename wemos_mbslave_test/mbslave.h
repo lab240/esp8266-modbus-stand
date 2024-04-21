@@ -1,15 +1,18 @@
-
-#ifndef mbslave
-#define mbslave 
+#ifndef __mbslave__
+#define __mbslave__
 
 #include "Arduino.h"
 #include "mbase.h"
+#include "commands.h"
 
 
 #define NUM_TRY 10
 
-#define MAX_ID 127            // максимально допустимый адрес модбас
+#define MODE_SETUP 1
 
+#define MAX_ID 127            // максимально допустимый адрес модбас
+#define MAX_INT_REGS 255
+#define MAX_COIL_REGS 255
 
 
 String get_command_str(){
@@ -43,43 +46,88 @@ String get_command_str(){
   return String(inCommand);
 }
 
-int do_command(WMSettings *_s, String cmdStr, String valStr){
-  
-  if (cmdStr == "seta"){ // проверяем первые 4 символа на соответствие команде 
-            
-      uint newAdress=0;
-      if((newAdress=valStr.toInt()) == 0 ){
+int set_settings_val_int(WMSettings *_s, String _command, String _valStr, int* _setting_val,  int _min =0, int _max=255) {
+      int test_val;
+      bool recognize = 0;
+      if (_valStr.startsWith("0") && _valStr.length() == 1) {
+        test_val = 0;
+        recognize = 1;
+      }
+      test_val = _valStr.toInt();
+      if (recognize == 0 && test_val != 0) recognize = 1;
+      if (recognize == 0) {
+        //publish_to_info_topic("E:not set, INT wait");
         debug(DCOMMAND, "Failed convert address to int value",1);
+        return 0;
       }
 
-      if (0 < newAdress && newAdress <= MAX_ID ){   // проверяем на соответствие диапазону 0...127
-        _s->custom_level1=newAdress;
-        debug(DCOMMAND, "Set new address ->" +String(newAdress));
+      if (test_val >= _min && test_val <= _max) {
+        *_setting_val = test_val;
+        debug(DCOMMAND, "Set new value ->" +String(*_setting_val));
         esave(_s);
-        debug(DEEPROM, "New settings saved to EEPROM->"+String(_s->custom_level1));        
-        return 0;             // подтверждаем запись
+        debug(DEEPROM, "New settings saved to EEPROM");        
+        return 1;
       }
-      else{ 
-        // не попали в диапазон - пишем ошибку
-        debug(DCOMMAND, "Wrong address range !",1);    
-        debug(DCOMMAND, "New address not selected or recognized, leave old address ->"+String(_s->custom_level1),4);
-        return 2;
-      }             
-    }
-    
-    if (cmdStr == "setap"){
-      debug(DCOMMAND, "Something do with->" + String(cmdStr));
+
+      //publish_to_info_topic(String("E:expected " + String(_min) + "<>" + String(_max)).c_str());
+      debug(DCOMMAND, "Wrong range min-max",1);
       return 0;
-    }
-    
-    if (cmdStr == "setp"){
-       debug(DCOMMAND, "Something do with->" + String(cmdStr));
-       return 0;
-    }
-    // если команды = не поступило
-      debug(DCOMMAND, "Unknown command with = ->"+cmdStr+"="+valStr,TERROR);
-      return 1;
-  };
+
+    };
+
+  int set_settings_val_bool(WMSettings *_s, String _command, String _valStr, bool* _setting_val) {
+      bool recognize = 0;
+      if (_valStr.startsWith("0") && _valStr.length() == 1) {
+        *_setting_val = 0;
+        recognize = 1;
+      }
+      if (_valStr.startsWith("1") && _valStr.length() == 1) {
+        *_setting_val = 1;
+        recognize = 1;
+      }
+      if (recognize) {
+        //publish_to_info_topic(String("N:" + _command + "=" + String(*_setting_val)).c_str());
+        debug(DCOMMAND, "Set new value ->" +String(*_setting_val));
+        esave(_s);
+        debug(DEEPROM, "New settings saved to EEPROM");        
+        return 1;
+      }
+      debug(DCOMMAND, "Wrong range 0-1",1);
+      return 0;
+    };
+
+  int set_settings_val_str(WMSettings *_s, String _command, String _valStr, char const* _setting_val_char_array, int _max_len) {
+      bool recognize = 0;
+     
+      if (strlen(_setting_val_char_array)<_max_len) {
+        _setting_val_char_array = _valStr.c_str();
+        recognize = 1;
+      }
+      if (recognize) {
+        debug(DCOMMAND, "Set new value ->" +String(_setting_val_char_array));
+        esave(_s);
+        debug(DEEPROM, "New settings saved to EEPROM");        
+        return 1;
+      }
+      debug(DCOMMAND, "Wrong range max len of string",1);
+      return 0;
+    };
+
+
+
+int do_command(WMSettings *_s, String cmdStr, String valStr){
+  
+  if (cmdStr == CMD_SET_ADDRESS)
+      if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level1, 0,MAX_ID)) return 1;
+  
+  if (cmdStr == CMD_SET_INT_REGS_AMOUNT)
+      if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level2, 0,MAX_INT_REGS)) return 1;
+  
+  if (cmdStr == CMD_SET_COIL_REGS_AMOUNT)
+      if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level2, 0,MAX_COIL_REGS)) return 1;
+  return 0;
+
+};
 
 #endif
 
