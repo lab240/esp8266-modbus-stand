@@ -61,7 +61,7 @@ void setup() {
 
   eload(&settings);
 
-  debug(DEEPROM, "Salt="+String(settings.salt)+"; Address="+String(modbus_address));
+  debug(DEEPROM, "Salt="+String(settings.salt)+"; Address="+String(modbus_address)+"; RegsI="+String(intregs_amount)+"; RegsC="+String(coilregs_amount));
 
   if (settings.salt != EEPROM_SALT || modbus_address > MAX_ID) {
     debug(DEEPROM, "Invalid settings in EEPROM, trying with defaults",TERROR);
@@ -80,7 +80,7 @@ void setup() {
   debug(DENTER,0);
 
   debug(DMAIN, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
-  debug(DMAIN, "seta=<ADDRESS> (1..127)");
+  debug(DMAIN, "seta=<ADDRESS> (1..127), setir=<NUM_INT_REGS>, setcr=<NUM_COILS>");
   debug(DMAIN, "---------------------------------------------------------------------------------------");
   debug(DENTER,0);
 
@@ -99,7 +99,9 @@ void setup() {
         String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
         String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
         debug(DCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
-        do_command(&settings, cmdStr, numStr);
+        if(!do_command(&settings, cmdStr, numStr)) {
+          debug(DCOMMAND,"Wrong set parameter->"+cmdStr);
+        }
       }else{
         debug(DCOMMAND, "Commnad is not recognized", TOUT);
       }
@@ -114,7 +116,10 @@ void setup() {
   debug(DENTER,0); // \n
 
   debug(DMAIN, "------ Start modbus emulation ------");
-  debug(DMAIN, "Start programm with Modbus address->"+String(modbus_address), TOUT);
+  debug(DMAIN, "Start programm with", TOUT);
+  debug(DMAIN, "Modbus address->"+String(modbus_address), TOUT);
+  debug(DMAIN, "HOLD REGS->"+String(intregs_amount), TOUT);
+  debug(DMAIN, "COIL REGS->"+String(coilregs_amount), TOUT);
   debug(DMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
   debug(DMAIN, "-------------------------------------");
 

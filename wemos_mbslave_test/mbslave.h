@@ -124,7 +124,7 @@ int do_command(WMSettings *_s, String cmdStr, String valStr){
       if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level2, 0,MAX_INT_REGS)) return 1;
   
   if (cmdStr == CMD_SET_COIL_REGS_AMOUNT)
-      if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level2, 0,MAX_COIL_REGS)) return 1;
+      if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level3, 0,MAX_COIL_REGS)) return 1;
   return 0;
 
 };
