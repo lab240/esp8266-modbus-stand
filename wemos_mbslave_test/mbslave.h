@@ -121,13 +121,19 @@ int do_command(WMSettings *_s, String cmdStr, String valStr){
       if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level1, 0,MAX_ID)) return 1;
   
   if (cmdStr == CMD_SET_INT_REGS_AMOUNT)
-      if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level2, 0,MAX_INT_REGS)) return 1;
+      if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level2, 4,MAX_INT_REGS)) return 1;
   
   if (cmdStr == CMD_SET_COIL_REGS_AMOUNT)
       if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level3, 0,MAX_COIL_REGS)) return 1;
   return 0;
 
 };
+
+void print_curr_settings(WMSettings *_s){
+  debug(DMAIN, "Mdbus address->"+String(_s->custom_level1), TOUT);
+  debug(DMAIN, "HOLD REGS->"+String(_s->custom_level2), TOUT);
+  debug(DMAIN, "COIL REGS->"+String(_s->custom_level3), TOUT);
+}
 
 #endif
 

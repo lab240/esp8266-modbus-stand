@@ -1,6 +1,7 @@
 #include <ModbusRTU.h>
 #include <EEPROM.h>
 #include <Ticker.h>
+#include <ESP8266TrueRandom.h>
 #include "mbslave.h"
 
 #define DEBUG 1
@@ -16,12 +17,9 @@
 //константы адреса модбас регистра -1 для правильного отображения в mbpool
 #define NUM_TRY 10
 
-#define EXTRAREGS 5 
+// #define EXTRAREGS 5 
 
 #define MAXEXTRAREGS 255 
-
-int mb_intregs[MAXEXTRAREGS];
-int mb_coilregs[MAXEXTRAREGS];
 
 #define modbus_address settings.custom_level1
 #define intregs_amount settings.custom_level2
@@ -30,6 +28,11 @@ int mb_coilregs[MAXEXTRAREGS];
 #define DEFAULT_ADDRESS 126
 #define DEFAULT_INT_REGS 10
 #define DEFAULT_COIL_REGS 10
+
+#define R_ADDR 0
+#define R_HOUR 1
+#define R_MINS 2
+#define R_SECS 3
 
 
 ModbusRTU mb;                 // объект для взаимодействия с либой ModbusRTU
@@ -80,8 +83,10 @@ void setup() {
   debug(DENTER,0);
 
   debug(DMAIN, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
-  debug(DMAIN, "seta=<ADDRESS> (1..127), setir=<NUM_INT_REGS>, setcr=<NUM_COILS>");
-  debug(DMAIN, "---------------------------------------------------------------------------------------");
+  debug(DMAIN, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), " + String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>, "+ String(CMD_SET_COIL_REGS_AMOUNT) + "=<NUM_COILS>");
+  debug(DMAIN, "----------------Current Settings  ----------------------------------------------");
+  print_curr_settings(&settings);
+  debug(DMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
   debug(DENTER,0);
 
   String inCommandStr=""; 
@@ -95,7 +100,12 @@ void setup() {
     
     if(inCommandStr!=""){
       debug(DCOMMAND, "Received incoming string->"+String(inCommandStr));
-      if(inCommandStr.indexOf('=')!=-1){
+     
+      if( inCommandStr.length()<=3 && inCommandStr.charAt(0)=='C') {
+        debug(DCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Skip waiting command", TOUT);
+        stop_commnads=1;
+      }
+      else if(inCommandStr.indexOf('=')!=-1){
         String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
         String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
         debug(DCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
@@ -116,10 +126,7 @@ void setup() {
   debug(DENTER,0); // \n
 
   debug(DMAIN, "------ Start modbus emulation ------");
-  debug(DMAIN, "Start programm with", TOUT);
-  debug(DMAIN, "Modbus address->"+String(modbus_address), TOUT);
-  debug(DMAIN, "HOLD REGS->"+String(intregs_amount), TOUT);
-  debug(DMAIN, "COIL REGS->"+String(coilregs_amount), TOUT);
+  print_curr_settings(&settings);
   debug(DMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
   debug(DMAIN, "-------------------------------------");
 
@@ -134,24 +141,14 @@ void setup() {
   mb.begin(&Serial);  //указание порта для модбас
   mb.slave(modbus_address); // указание адреса устройства в протоколе модбас
 
-  // mb.addHreg(REGNA); // добавление регистра с адресом устройства
-  // mb.addHreg(REGNH); // добавление регистра часов
-  // mb.addHreg(REGNM); // добавление регистра минут
-  // mb.addHreg(REGNS); // добавление регистра секунд
-
-  // mb.Hreg(REGNA, 0); //обнуление данных регистра адреса
-  // mb.Hreg(REGNH, 0); //обнуление данных регистра часов
-  // mb.Hreg(REGNM, 0); //обнуление данных регистра минут
-  // mb.Hreg(REGNS, 0); //обнуление данных регистра секунд
-
-  for(int i=0; i<=intregs_amount; i++){
-    mb.addHreg(mb_intregs[i]); //add register
-    mb.Hreg(mb_intregs[i],0);  //add 0 to each reg
+  for(int h_reg=0; h_reg<intregs_amount; h_reg++){
+    mb.addHreg(h_reg); //add register
+    mb.Hreg(h_reg,0);  //add 0 to each reg
   }
 
-   for(int i=0; i<=coilregs_amount; i++){
-    mb.addCoil(mb_coilregs[i]); //add register
-    mb.Coil(mb_coilregs[i],0);  //add 0 to each reg
+   for(int c_reg=0; c_reg<coilregs_amount; c_reg++){
+    mb.addCoil(c_reg); //add register
+    mb.Coil(c_reg,0);  //add 0 to each reg
   }
 
 //callback when request comes
@@ -164,30 +161,33 @@ void loop() {
 
   mb.task(); // слушаем модбас
   //yield();   // отпускаем для обработки Wi-Fi
-  if(softTimer<(millis()))regTime(); // обновляем регистры по таймеру
+  if(softTimer<(millis())) update_regs(); // обновляем регистры по таймеру
 }
 
-void regTime (void){
+void update_regs(){
   uint32_t sec = millis() / 1000ul;      // полное количество секунд со старта платы
   uint16_t timeHours = (sec / 3600ul);        // часы
   uint16_t timeMins = (sec % 3600ul) / 60ul;  // минуты
   uint16_t timeSecs = (sec % 3600ul) % 60ul;  // секунды
 
   // заполняем реги значениями времени
-  mb.Hreg(mb_intregs[0], modbus_address); 
-  mb.Hreg(mb_intregs[1], timeHours);
-  mb.Hreg(mb_intregs[2], timeMins);
-  mb.Hreg(mb_intregs[3], timeSecs);
+  mb.Hreg(R_ADDR, modbus_address); 
+  mb.Hreg(R_HOUR, timeHours);
+  mb.Hreg(R_MINS, timeMins);
+  mb.Hreg(R_SECS, timeSecs);
 
   //next regs are random
 
-  for(int i=4; i<=intregs_amount; i++){
-     mb.Hreg(mb_intregs[i],random(1,32000));
-  }
-
-   for(int i=0; i<=coilregs_amount; i++){
-     mb.Coil(mb_coilregs[i],random(0,1));
-  }
+  if(intregs_amount!=0)
+   for(int h_reg=R_SECS+1; h_reg<intregs_amount; h_reg++){
+      //mb.Hreg(h_reg,random(1,32000));
+      mb.Hreg(h_reg,ESP8266TrueRandom.random(32000));
+   }
+  
+  if(coilregs_amount!=0)
+   for(int c_reg=0; c_reg<coilregs_amount; c_reg++){
+     mb.Coil(c_reg,ESP8266TrueRandom.randomBit());
+   }
 
 
   softTimer= millis() + 500; // перевзводим на полсекунды
