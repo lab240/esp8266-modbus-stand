@@ -12,7 +12,10 @@
 #define DERROR "ERROR"
 #define DEEPROM "EEPROM"
 #define DMAIN "MAIN"
+#define DHELP "HELP"
+
 #define DENTER "DENTER" // same Serial.println("\n")
+
 
 #define TERROR 1 //ошибки будут при любом дебаге
 #define TOUT 4   //обязательные сообщения, будут при любом дебаге

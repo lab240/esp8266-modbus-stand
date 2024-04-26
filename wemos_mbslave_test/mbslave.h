@@ -130,10 +130,24 @@ int do_command(WMSettings *_s, String cmdStr, String valStr){
 };
 
 void print_curr_settings(WMSettings *_s){
-  debug(DMAIN, "Mdbus address->"+String(_s->custom_level1), TOUT);
-  debug(DMAIN, "HOLD REGS->"+String(_s->custom_level2), TOUT);
-  debug(DMAIN, "COIL REGS->"+String(_s->custom_level3), TOUT);
+  debug(DHELP, "Mdbus address->"+String(_s->custom_level1), TOUT);
+  debug(DHELP, "HOLD REGS->"+String(_s->custom_level2), TOUT);
+  debug(DHELP, "COIL REGS->"+String(_s->custom_level3), TOUT);
 }
 
+void print_welcome_help(){
+  debug(DHELP, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
+  debug(DHELP, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), " + String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>, "+ String(CMD_SET_COIL_REGS_AMOUNT) + "=<NUM_COILS>");
+  debug(DHELP, "help - get full help");
+}
+
+void print_full_help(){
+  debug(DHELP, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
+  debug(DHELP, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), ");
+  debug(DHELP, String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>");
+  debug(DHELP, String(CMD_SET_COIL_REGS_AMOUNT) + "=<NUM_COILS>");
+  debug(DHELP, String(CMD_SET_BAUDRATE) + "=<BAUDRATE> baudrate for modbus, possible values: 115200, 9600, 19200, 57600... or custom baudrate");
+  debug(DHELP, String(CMD_SET_PORT_SETTINGS) + "=<NUM_OF_SETTNGS> portsettings for modbus, possible values: \"=6\"->SERIAL_8N1, \"=38\"->SERIAL_8E1");
+}
 #endif
 

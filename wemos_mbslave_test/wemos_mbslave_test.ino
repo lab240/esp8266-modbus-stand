@@ -7,8 +7,8 @@
 #define DEBUG 1
 
 
-#define MB_RATE 115200        // скорость обмена по модбас
-#define MB_FC SERIAL_8E1      // параметры контроля передачи модбас
+#define DEFAULT_MB_RATE 115200        // скорость обмена по модбас
+#define DEFAULT_MB_FC SERIAL_8E1      // параметры контроля передачи модбас
 
 //#define LED_DATA D6
 
@@ -24,6 +24,10 @@
 #define modbus_address settings.custom_level1
 #define intregs_amount settings.custom_level2
 #define coilregs_amount settings.custom_level3
+#define serial_baudrate settings.custom_level4
+#define serial_settings_num settings.custom_level_notify1
+
+SerialConfig serial_settings=DEFAULT_MB_FC;
 
 #define DEFAULT_ADDRESS 126
 #define DEFAULT_INT_REGS 10
@@ -73,19 +77,23 @@ void setup() {
     modbus_address=DEFAULT_ADDRESS; //по умолчанию пусть будет 126й адрес
     intregs_amount=DEFAULT_INT_REGS;
     coilregs_amount=DEFAULT_COIL_REGS;
+    serial_baudrate=DEFAULT_MB_RATE;
+    serial_settings=DEFAULT_MB_FC;
 
-    debug(DEEPROM, "Salt="+String(settings.salt)+"; Address="+String(modbus_address), TDEBUG);
+    debug(DEEPROM, "DEFAULTS: Salt="+String(settings.salt), TOUT);
+    print_curr_settings(&settings);
     
+  }else{
+    serial_settings=get_serial_sttings_from_num(serial_settings_num); 
+    debug(DEEPROM, "LOADED from EEPROM: Salt="+String(settings.salt), TOUT);
+    print_curr_settings(&settings);
   }
 
   // инициализируем уарт с параметрами стандартного монитора порта
 
   debug(DENTER,0);
-
-  debug(DMAIN, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
-  debug(DMAIN, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), " + String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>, "+ String(CMD_SET_COIL_REGS_AMOUNT) + "=<NUM_COILS>");
-  debug(DMAIN, "----------------Current Settings  ----------------------------------------------");
-  print_curr_settings(&settings);
+  print_welcome_help();
+ 
   debug(DMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
   debug(DENTER,0);
 
@@ -104,14 +112,23 @@ void setup() {
       if( inCommandStr.length()<=3 && inCommandStr.charAt(0)=='C') {
         debug(DCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Skip waiting command", TOUT);
         stop_commnads=1;
-      }
-      else if(inCommandStr.indexOf('=')!=-1){
+
+      }else if(inCommandStr.length()>3 && inCommandStr.indexOf('=')==-1){
+        //commands 
+        debug(DCOMMAND,"command recognized");
+        if(inCommandStr.startsWith("help")){
+          print_full_help();
+        }
+      
+      }else if(inCommandStr.indexOf('=')!=-1){
+        //settings set_parameter=<value>
         String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
         String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
         debug(DCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
         if(!do_command(&settings, cmdStr, numStr)) {
-          debug(DCOMMAND,"Wrong set parameter->"+cmdStr);
+          debug(DCOMMAND,"Wrong set parameter or value->"+cmdStr);
         }
+      
       }else{
         debug(DCOMMAND, "Commnad is not recognized", TOUT);
       }
@@ -133,7 +150,8 @@ void setup() {
   ::delay(200);  // дожидаемся окончания передач в уарт
   
 
-  Serial.begin(MB_RATE, MB_FC); // инициализация уарт с настройками для Модбас
+  //Serial.begin(serial_baudrate, (uint8_t) serial_settings_num); // инициализация уарт с настройками для Модбас
+  Serial.begin(serial_baudrate, serial_settings); // инициализация уарт с настройками для Модбас
   pinMode(D1, OUTPUT);
   digitalWrite(D1, HIGH);
   Serial.swap();
