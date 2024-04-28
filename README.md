@@ -85,31 +85,31 @@ Data type.............: discrete output (coil)
 
 Выбрать порт, к которому присоденен Wemos
 
-![](images/arduino/arduino-port1.jpg)
+![wemos](images/arduino/arduino-port1.jpg)
 
 Инструменты - Монитор порта (Ctrl+Shift+M).  
 Настройки порта 115200 (8N1)  
 
-![](images/arduino/arduino-term2.jpg)
+![wemos](images/arduino/arduino-term2.jpg)
 
 
 - Можно также не ставить Arduino и управлять устройство из СuteCom
 
 В CuteCom нажать Settings
 
-![](images/cutecom/settings.jpg)
+![wemos](images/cutecom/settings.jpg)
 
 ***Ванильные putty и minicom не подойдут по причине того, что ориентированы на приглашение для ввода.***
 
 
 ## Режим настройки устройства
 
-1. Нажать reset на плате.   
+1. Нажать reset на плате.
 
 2. Побежит вначале загрузочный мусор, а потом надпись вида:  
 
 
-```
+```bash
 [20:01:27:084] ->MAIN:-------------- Avaliable commnads (wait for 10 secs) -----------------␍␊
 [20:01:27:096] ->MAIN:seta=<ADDRESS> (1..127), setr=<NUM_INT_REGS>, setc=<NUM_COILS>␍␊
 [20:01:27:097] ->MAIN:----------------Current Settings  ----------------------------------------------␍␊
@@ -124,7 +124,7 @@ Data type.............: discrete output (coil)
 
 Система выводит текущие значения (по умолчанию или ранее сохраненные): Адрес - 5, Количество регистров - 100, Количество coils - 150.
 
-**У Вас есть 10 секунд чтобы ввести команду, меняющую параметр датчика**
+>**У Вас есть 10 секунд чтобы ввести команду, меняющую параметр датчика**
 
 Команды описаны в файле `commands.h`
 

@@ -101,7 +101,7 @@ typedef struct {
 #define SERIAL_5O2 0x38
 #define SERIAL_6O2 0x3A
 #define SERIAL_7O2 0x3C
-#define SERIAL_8O2 0x3E
+#define SERIAL_8O2 0x3E //62
 */
 
 SerialConfig get_serial_sttings_from_num(uint serial_settings_num){
@@ -109,7 +109,18 @@ SerialConfig get_serial_sttings_from_num(uint serial_settings_num){
     case 38: return SERIAL_8E1;
     case 6: return SERIAL_8N1;
   }
-}
+  return SERIAL_5N1;
+};
+
+String get_port_settings_string(uint serial_settings_num){
+  String outStr="";
+  switch(serial_settings_num){
+    case 6: return "SERIAL_8N1";
+    case 38: return "SERIAL_8E1";
+  }
+  return "UNKNOWN";
+};
+
 
 
 

@@ -125,7 +125,7 @@ void setup() {
         String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
         String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
         debug(DCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
-        if(!do_command(&settings, cmdStr, numStr)) {
+        if(!do_set_command(&settings, cmdStr, numStr)) {
           debug(DCOMMAND,"Wrong set parameter or value->"+cmdStr);
         }
       
