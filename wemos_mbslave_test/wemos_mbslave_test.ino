@@ -7,10 +7,6 @@
 
 #define DEBUG 1
 
-
-#define DEFAULT_MB_RATE 115200        // скорость обмена по модбас
-#define DEFAULT_MB_FC SERIAL_8E1      // параметры контроля передачи модбас
-
 //#define LED_DATA D6
 
 #define LED_DATA LED_BUILTIN
@@ -28,17 +24,14 @@
 // #define serial_baudrate settings.custom_level4
 // #define serial_settings_num settings.custom_level_notify1
 
-#define modbus_address  _s->custom_level1
-#define intregs_amount  _s->custom_level2
-#define coilregs_amount _s->custom_level3
-#define serial_baudrate _s->custom_level4
-#define serial_settings_num _s->custom_level_notify1
+// #define modbus_address  _s->custom_level1
+// #define intregs_amount  _s->custom_level2
+// #define coilregs_amount _s->custom_level3
+// #define serial_baudrate _s->custom_level4
+// #define serial_settings_num _s->custom_level_notify1
 
 SerialConfig serial_settings=DEFAULT_MB_FC;
 
-#define DEFAULT_ADDRESS 126
-#define DEFAULT_INT_REGS 10
-#define DEFAULT_COIL_REGS 10
 
 #define R_ADDR 0
 #define R_HOUR 1
@@ -82,28 +75,28 @@ void setup() {
    debug(DEEPROM, "Setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt),  TOUT);
    print_curr_settings(_s);
 
-  debug(DEEPROM, "Salt="+String(_s->salt)+"; Address="+String(modbus_address)+"; RegsI="+String(intregs_amount)+"; RegsC="+String(coilregs_amount));
+  debug(DEEPROM, "Salt="+String(_s->salt)+"; Address="+String(_s->mb_modbus_address)+"; RegsI="+String(_s->mb_intregs_amount)+"; RegsC="+String(_s->mb_coilregs_amount));
   //debug(DEEPROM, "Salt="+String(_s->salt)+"; Address="+String(_s->custom_level1)+"; RegsI="+String(_s->custom_level2)+"; RegsC="+String(_s->custom_level3));
 
   if (_s->salt != EEPROM_SALT) {
     debug(DEEPROM, "Invalid settings in EEPROM, trying with defaults",TERROR);
     WMSettings defaults;
     *_s = defaults;
-    modbus_address=DEFAULT_ADDRESS; //по умолчанию пусть будет 126й адрес
-    intregs_amount=DEFAULT_INT_REGS;
-    coilregs_amount=DEFAULT_COIL_REGS;
-    serial_baudrate=DEFAULT_MB_RATE;
+    _s->mb_modbus_address=DEFAULT_ADDRESS; //по умолчанию пусть будет 126й адрес
+    _s->mb_intregs_amount=DEFAULT_INT_REGS;
+    _s->mb_coilregs_amount=DEFAULT_COIL_REGS;
+    _s->mb_serial_baudrate=DEFAULT_MB_RATE;
     serial_settings=DEFAULT_MB_FC;
-    serial_settings_num=NSERIAL_8E1; //SERIAL_8E1
+    _s->mb_serial_settings_num=NSERIAL_8E1; //SERIAL_8E1
 
     debug(DEEPROM, "DEFAULTS: Salt="+String(_s->salt), TOUT);
     print_curr_settings(_s);
     
   }else{
     //check each parameter
-    int is_corrected=correction_to_default_if_need();
+    int is_corrected=correction_to_default_if_need(_s);
  
-    serial_settings=get_serial_sttings_from_num(serial_settings_num); 
+    serial_settings=get_serial_sttings_from_num(_s->mb_serial_settings_num); 
     if(is_corrected) {
       debug(DEEPROM, "LOADED from EEPROM with correction", TOUT);
       print_curr_settings(_s);
@@ -134,26 +127,26 @@ void setup() {
   
 
   //Serial.begin(serial_baudrate, (uint8_t) serial_settings_num); // инициализация уарт с настройками для Модбас
-  Serial.begin(serial_baudrate, serial_settings); // инициализация уарт с настройками для Модбас
+  Serial.begin(_s->mb_serial_baudrate, serial_settings); // инициализация уарт с настройками для Модбас
   pinMode(D1, OUTPUT);
   digitalWrite(D1, HIGH);
   Serial.swap();
 
   mbus_obj.begin(&Serial);  //указание порта для модбас
-  mbus_obj.slave(modbus_address); // указание адреса устройства в протоколе модбас
+  mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
 
-  for(int h_reg=0; h_reg<intregs_amount; h_reg++){
+  for(int h_reg=0; h_reg<_s->mb_intregs_amount; h_reg++){
     mbus_obj.addHreg(h_reg); //add register
     mbus_obj.Hreg(h_reg,0);  //add 0 to each reg
   }
 
-   for(int c_reg=0; c_reg<coilregs_amount; c_reg++){
+   for(int c_reg=0; c_reg<_s->mb_coilregs_amount; c_reg++){
     mbus_obj.addCoil(c_reg); //add register
     mbus_obj.Coil(c_reg,0);  //add 0 to each reg
   }
 
 //callback when request comes
-  mbus_obj.onGetHreg(0,cbReadHreg,intregs_amount);
+  mbus_obj.onGetHreg(0,cbReadHreg,_s->mb_intregs_amount);
 
   led_mode_setup=0; //finish setup blinking
 }
@@ -172,21 +165,21 @@ void update_regs(){
   uint16_t timeSecs = (sec % 3600ul) % 60ul;  // секунды
 
   // заполняем реги значениями времени
-  mbus_obj.Hreg(R_ADDR, modbus_address); 
+  mbus_obj.Hreg(R_ADDR, _s->mb_modbus_address); 
   mbus_obj.Hreg(R_HOUR, timeHours);
   mbus_obj.Hreg(R_MINS, timeMins);
   mbus_obj.Hreg(R_SECS, timeSecs);
 
   //next regs are random
 
-  if(intregs_amount!=0)
-   for(int h_reg=R_SECS+1; h_reg<intregs_amount; h_reg++){
+  if(_s->mb_intregs_amount!=0)
+   for(int h_reg=R_SECS+1; h_reg<_s->mb_intregs_amount; h_reg++){
       //mbus_obj.Hreg(h_reg,random(1,32000));
       mbus_obj.Hreg(h_reg,ESP8266TrueRandom.random(32000));
    }
   
-  if(coilregs_amount!=0)
-   for(int c_reg=0; c_reg<coilregs_amount; c_reg++){
+  if(_s->mb_coilregs_amount!=0)
+   for(int c_reg=0; c_reg<_s->mb_coilregs_amount; c_reg++){
      mbus_obj.Coil(c_reg,ESP8266TrueRandom.randomBit());
    }
 
@@ -204,32 +197,3 @@ void tickf(){
 }
 
 
-int correction_to_default_if_need(){
-
-    if(modbus_address>MAX_ID) {
-      debug(DEEPROM, "Modbus address is corrected to default", TOUT);
-      modbus_address=DEFAULT_ADDRESS;
-      return 1;
-    }
-    if(intregs_amount<MIN_INT_REGS || intregs_amount>MAX_INT_REGS) {
-      debug(DEEPROM, "Int Regs amount is corrected to default", TOUT);
-      intregs_amount=DEFAULT_INT_REGS;
-      return 1;
-    }
-    if(coilregs_amount<MIN_COIL_REGS || coilregs_amount>MAX_COIL_REGS){
-      debug(DEEPROM, "COIL Regs amount is corrected to default", TOUT);
-      coilregs_amount=DEFAULT_COIL_REGS;
-      return 1;
-    } 
-    if(serial_baudrate<MIN_BAUDRATE || serial_baudrate > MAX_BAUDRATE){
-      debug(DEEPROM, "Serial BAUDRATE is corrected to default", TOUT);
-      serial_baudrate=DEFAULT_MB_RATE;
-      return 1;
-    }  
-    if(serial_settings_num<0 || serial_settings_num > MAX_SERIAL_VAR_NUM) {
-      debug(DEEPROM, "Serial SETTINGS NUM is corrected to default", TOUT);
-      serial_settings_num=NSERIAL_8E1;
-      return 1;
-    }
-    return 0;
-}
