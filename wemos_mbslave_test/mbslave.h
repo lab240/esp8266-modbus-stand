@@ -4,6 +4,7 @@
 #include "Arduino.h"
 #include "mbase.h"
 #include "commands.h"
+#include "mbserial.h"
 
 
 #define NUM_TRY 10
@@ -11,11 +12,17 @@
 #define MODE_SETUP 1
 
 #define MAX_ID 127            // максимально допустимый адрес модбас
+
 #define MAX_INT_REGS 255
+#define MIN_INT_REGS 4
+
 #define MAX_COIL_REGS 255
+#define MIN_COIL_REGS 0
+
 #define MAX_BAUDRATE 1500000
 #define MIN_BAUDRATE 1200
-#define MAX_SETTINGS_VARIANTS 62
+
+#define MAX_SERIAL_VAR_NUM 62
 
 #define SKIP_CHAR 'C'
 
@@ -134,7 +141,7 @@ int do_set_command(WMSettings *_s, String cmdStr, String valStr){
       if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level4, MIN_BAUDRATE, MAX_BAUDRATE )) return 1;
   
   if (cmdStr == CMD_SET_PORT_SETTINGS)
-      if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level_notify1, 1, MAX_SETTINGS_VARIANTS)) return 1;
+      if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->custom_level_notify1, 1, MAX_SERIAL_VAR_NUM)) return 1;
 
   return 0;
 
@@ -145,7 +152,8 @@ void print_curr_settings(WMSettings *_s){
   debug(DHELP, "HOLD REGS->"+String(_s->custom_level2), TOUT);
   debug(DHELP, "COIL REGS->"+String(_s->custom_level3), TOUT);
   debug(DHELP, "BAUDRATE->"+String(_s->custom_level4), TOUT);
-  debug(DHELP, "PORT SETTINGS->"+get_port_settings_string(_s->analog_level_notify1));
+  debug(DHELP, "PORT SERIAL NUM->"+String(_s->custom_level_notify1), TOUT);
+  debug(DHELP, "PORT SETTINGS->"+get_port_settings_string(_s->custom_level_notify1));
 }
 
 void print_welcome_help(){
@@ -163,52 +171,7 @@ void print_full_help(){
   debug(DHELP, String(CMD_SET_PORT_SETTINGS) + "=<NUM_OF_SETTNGS> portsettings for modbus, possible values: \"=6\"->SERIAL_8N1, \"=38\"->SERIAL_8E1");
 }
 
-int _settings_loop(WMSettings * _s){
-  String inCommandStr=""; 
-  bool stop_commnads=0;
-
-  while (!stop_commnads){
-
-    inCommandStr=get_command_str();
-    
-    debug(DENTER,0);
-    
-    if(inCommandStr!=""){
-      debug(DCOMMAND, "Received incoming string->"+String(inCommandStr));
-     
-      if( inCommandStr.length()<=3 && inCommandStr.charAt(0)==SKIP_CHAR) {
-        debug(DCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Skip waiting command", TOUT);
-        stop_commnads=1;
-
-      }else if(inCommandStr.length()>3 && inCommandStr.indexOf('=')==-1){
-        //commands 
-        debug(DCOMMAND,"command recognized");
-        if(inCommandStr.startsWith("help")){
-          print_full_help();
-        }
-      
-      }else if(inCommandStr.indexOf('=')!=-1){  //<parameter>=<value>
-        String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
-        String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
-        debug(DCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
-        if(!do_set_command(_s, cmdStr, numStr)) {
-          debug(DCOMMAND,"Wrong set parameter or value->"+cmdStr);
-        }
-      
-      }else{
-        debug(DCOMMAND, "Commnad is not recognized", TOUT);
-      }
-    
-    }else{
-      debug(DCOMMAND, "No incomming string");
-      stop_commnads=1;
-    }
-
-  }
- if(stop_commnads) return 1; else return 0;
-}
-
-int settings_loop(WMSettings * _s){
+int do_espboot_loop(WMSettings * _s){
   String inCommandStr=""; 
   bool stop_commnads=0;
 
@@ -230,10 +193,15 @@ int settings_loop(WMSettings * _s){
 
      if(inCommandStr.length()>3 && inCommandStr.indexOf('=')==-1){
         //commands 
-        debug(DCOMMAND,"command recognized");
-        if(inCommandStr.startsWith("help")){
+        debug(DCOMMAND,"command >" +String(inCommandStr) +"< incoming");
+        if(inCommandStr.startsWith(CMD_CMD_HELP)){
           print_full_help();
         }
+
+         if(inCommandStr.startsWith(CMD_CMD_PRINT)){
+          print_curr_settings(_s);
+        }
+      
        //<parameter>=<value>
       }else if(inCommandStr.indexOf('=')!=-1){  
 

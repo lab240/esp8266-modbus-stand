@@ -7,4 +7,7 @@
 #define CMD_SET_BAUDRATE "setb"
 #define CMD_SET_PORT_SETTINGS "setp"
 
+#define CMD_CMD_HELP "help"
+#define CMD_CMD_PRINT "print"
+
 #endif
