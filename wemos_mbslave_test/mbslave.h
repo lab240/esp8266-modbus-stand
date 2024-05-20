@@ -46,6 +46,28 @@
 #define  mb_serial_settings_num  custom_level_notify1
 //*******************************************************
 
+
+int mywifi_try_to_connect(){
+  int c = 0;
+  IPAddress ip;
+  while (WiFi.status() != WL_CONNECTED && c < 20) {
+    delay(500);
+    Serial.print(".");
+    c++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("WIFI_CONNECTED");
+      ip = WiFi.localIP();
+      Serial.print("This is my ip: ");
+      Serial.println(ip);
+      return 1;
+  }else{
+      Serial.println("WIFI_NOT_CONNECTED");
+      return 1;
+  }
+};
+
 //get command from terminal
 String get_command_str(){
   int is_cmd=0;
@@ -166,18 +188,28 @@ int do_set_command(WMSettings *_s, String cmdStr, String valStr){
   if (cmdStr == CMD_SSID){
       debug(DCOMMAND, "Wifi Creds, push ssid="+valStr);
       
-      if(valStr.indexOf('=')!=-1){  
+      if(valStr.indexOf('|')!=-1){  
         String ssidStr=  valStr.substring(0,valStr.indexOf('|'));
         String passStr = valStr.substring(valStr.indexOf('|')+1,valStr.length());
         debug(DCOMMAND, "Command->"+ ssidStr+", Value->"+passStr);
         debug(DCOMMAND, "Writing creds...");
         WiFi.begin(ssidStr.c_str(), passStr.c_str(), 0, NULL, false);
         struct station_config stationConf;
-        wifi_station_get_config (&stationConf);
-        debug(DCOMMAND,String("new saved ssid=" + String((char*)stationConf.ssid) + ", new saved pass=" + String((char*) stationConf.password)));
+        //os_memset(stationConf.ssid, 0, sizeof(stationConf.ssid));
+	      //os_memset(stationConf.password, 0, sizeof(stationConf.password));
+	      //snprintf(stationConf.ssid, sizeof(stationConf.ssid), "%s", ssidStr.c_str());
+	      //snprintf(stationConf.password, sizeof(stationConf.password), "%s", passStr.c_str());
+        //WiFi.begin(ssidStr.c_str(), passStr.c_str());
+       
+        wifi_station_get_config(&stationConf);
+        debug(DCOMMAND,"new saved ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|"); 
+        wifi_station_set_config(&stationConf);
+        //mywifi_try_to_connect();
+        
+        //ESP.restart();
         return 1;
       }
-      debug(DCOMMAND,"Cand find `|` symbol in wifi|pass format");
+      debug(DCOMMAND,"Can't find `|` symbol in wifi|pass format");
   } 
   return 0;
 

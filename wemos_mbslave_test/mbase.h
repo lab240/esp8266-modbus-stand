@@ -13,6 +13,7 @@
 #define DEEPROM "EEPROM"
 #define DMAIN "MAIN"
 #define DHELP "HELP"
+#define DWIFI "WIFI"
 
 #define DENTER "DENTER" // same Serial.println("\n")
 
