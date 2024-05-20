@@ -25,7 +25,8 @@
                 "/home/dmn/Arduino/libraries/modbus-esp8266/src",
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/EEPROM",
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/Ticker/src",
-                "/home/dmn/Arduino/libraries/ESP8266TrueRandom-master"
+                "/home/dmn/Arduino/libraries/ESP8266TrueRandom-master",
+                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/ESP8266WiFi/src"
             ],
             "forcedInclude": [
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/cores/esp8266/Arduino.h"

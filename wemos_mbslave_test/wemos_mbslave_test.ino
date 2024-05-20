@@ -43,6 +43,8 @@ ModbusRTU mbus_obj;                 // объект для взаимодейс�
 
 Ticker ticker;
 
+WifiCreds wificreds;
+
 //WMSettings settings;
 
 WMSettings * _s;

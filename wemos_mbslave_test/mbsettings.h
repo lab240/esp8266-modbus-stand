@@ -78,5 +78,10 @@ typedef struct {
   int     temp_matrix[24]={22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,21};
 } WMSettings;
 
+typedef struct {
+	char ssid[20]="";
+	char pass[20]="";
+  uint ready_to_save=0;
+} WifiCreds;
 
 #endif

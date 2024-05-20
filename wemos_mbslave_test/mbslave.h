@@ -1,6 +1,7 @@
 #ifndef __mbslave__
 #define __mbslave__
 
+#include <ESP8266WiFi.h>       
 #include "Arduino.h"
 #include "mbase.h"
 #include "commands.h"
@@ -162,7 +163,22 @@ int do_set_command(WMSettings *_s, String cmdStr, String valStr){
   
   if (cmdStr == CMD_SET_PORT_SETTINGS)
       if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->mb_serial_settings_num, 1, MAX_SERIAL_VAR_NUM)) return 1;
-
+  if (cmdStr == CMD_SSID){
+      debug(DCOMMAND, "Wifi Creds, push ssid="+valStr);
+      
+      if(valStr.indexOf('=')!=-1){  
+        String ssidStr=  valStr.substring(0,valStr.indexOf('|'));
+        String passStr = valStr.substring(valStr.indexOf('|')+1,valStr.length());
+        debug(DCOMMAND, "Command->"+ ssidStr+", Value->"+passStr);
+        debug(DCOMMAND, "Writing creds...");
+        WiFi.begin(ssidStr.c_str(), passStr.c_str(), 0, NULL, false);
+        struct station_config stationConf;
+        wifi_station_get_config (&stationConf);
+        debug(DCOMMAND,String("new saved ssid=" + String((char*)stationConf.ssid) + ", new saved pass=" + String((char*) stationConf.password)));
+        return 1;
+      }
+      debug(DCOMMAND,"Cand find `|` symbol in wifi|pass format");
+  } 
   return 0;
 
 };
