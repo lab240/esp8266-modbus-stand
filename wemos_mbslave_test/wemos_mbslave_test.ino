@@ -128,8 +128,8 @@ void setup() {
 
   //Serial.begin(serial_baudrate, (uint8_t) serial_settings_num); // инициализация уарт с настройками для Модбас
   Serial.begin(_s->mb_serial_baudrate, serial_settings); // инициализация уарт с настройками для Модбас
-  pinMode(D1, OUTPUT);
-  digitalWrite(D1, HIGH);
+  pinMode(D5, OUTPUT);
+  digitalWrite(D5, HIGH);
   Serial.swap();
 
   mbus_obj.begin(&Serial);  //указание порта для модбас
