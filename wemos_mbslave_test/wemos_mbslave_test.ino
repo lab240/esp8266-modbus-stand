@@ -10,6 +10,7 @@
 //#define LED_DATA D6
 
 #define LED_DATA LED_BUILTIN
+#define POWER_PIN D5
 
 //константы адреса модбас регистра -1 для правильного отображения в mbpool
 #define NUM_TRY 10
@@ -128,8 +129,8 @@ void setup() {
 
   //Serial.begin(serial_baudrate, (uint8_t) serial_settings_num); // инициализация уарт с настройками для Модбас
   Serial.begin(_s->mb_serial_baudrate, serial_settings); // инициализация уарт с настройками для Модбас
-  pinMode(D5, OUTPUT);
-  digitalWrite(D5, HIGH);
+  pinMode(POWER_PIN, OUTPUT);
+  digitalWrite(POWER_PIN, HIGH);
   Serial.swap();
 
   mbus_obj.begin(&Serial);  //указание порта для модбас
