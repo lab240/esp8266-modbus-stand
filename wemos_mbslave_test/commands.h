@@ -13,4 +13,9 @@
 #define CMD_SSID "ssid"
 #define CMD_WIFI_PASSWD "wifipass"
 
+#define CMD_MQTT_USER "mqttuser"
+#define CMD_MQTT_PASS "mqttpass"
+#define CMD_MQTT_SERVER "mqttserver"
+#define CMD_MQTT_PORT "mqttport"
+
 #endif

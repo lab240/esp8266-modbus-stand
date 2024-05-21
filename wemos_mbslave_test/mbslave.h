@@ -6,6 +6,7 @@
 #include "mbase.h"
 #include "commands.h"
 #include "mbserial.h"
+#include "mbservice.h"
 
 
 //default values
@@ -15,9 +16,6 @@
 
 #define DEFAULT_MB_RATE 115200        // default baudrate
 #define DEFAULT_MB_FC SERIAL_8E1      // dfault  serial settings
-
-
-#define NUM_TRY 10   //waiting command pause
 
 // MAX and MIN values
 #define MAX_ID 127            // max modbus address
@@ -37,16 +35,6 @@
 
 #define MODE_SETUP 1  //tech
 
-//mapping abstract settings structure members to our names
-#define  mb_modbus_address       custom_level1
-#define  mb_intregs_amount       custom_level2
-#define  mb_coilregs_amount      custom_level3
-#define  mb_serial_baudrate      custom_level4
-
-#define  mb_serial_settings_num  custom_level_notify1
-//*******************************************************
-
-
 int mywifi_try_to_connect(){
   int c = 0;
   IPAddress ip;
@@ -63,7 +51,7 @@ int mywifi_try_to_connect(){
       Serial.println(ip);
       return 1;
   }else{
-      Serial.println("WIFI_NOT_CONNECTED");
+      debug(DWIFI, "WIFI_NOT_CONNECTED");
       return 1;
   }
 };
@@ -100,73 +88,6 @@ String get_command_str(){
   return String(inCommandChr);
 }
 
-int set_settings_val_int(WMSettings *_s, String _command, String _valStr, int* _setting_val,  int _min =0, int _max=255) {
-      int test_val;
-      bool recognize = 0;
-      if (_valStr.startsWith("0") && _valStr.length() == 1) {
-        test_val = 0;
-        recognize = 1;
-      }
-      test_val = _valStr.toInt();
-      if (recognize == 0 && test_val != 0) recognize = 1;
-      if (recognize == 0) {
-        //publish_to_info_topic("E:not set, INT wait");
-        debug(DCOMMAND, "Failed convert address to int value",1);
-        return 0;
-      }
-
-      if (test_val >= _min && test_val <= _max) {
-        *_setting_val = test_val;
-        debug(DCOMMAND, "Set new value ->" +String(*_setting_val));
-        esave(_s);
-        debug(DEEPROM, "New settings saved to EEPROM");        
-        return 1;
-      }
-
-      //publish_to_info_topic(String("E:expected " + String(_min) + "<>" + String(_max)).c_str());
-      debug(DCOMMAND, "Wrong range min-max",1);
-      return 0;
-
-    };
-
-  int set_settings_val_bool(WMSettings *_s, String _command, String _valStr, bool* _setting_val) {
-      bool recognize = 0;
-      if (_valStr.startsWith("0") && _valStr.length() == 1) {
-        *_setting_val = 0;
-        recognize = 1;
-      }
-      if (_valStr.startsWith("1") && _valStr.length() == 1) {
-        *_setting_val = 1;
-        recognize = 1;
-      }
-      if (recognize) {
-        //publish_to_info_topic(String("N:" + _command + "=" + String(*_setting_val)).c_str());
-        debug(DCOMMAND, "Set new value ->" +String(*_setting_val));
-        esave(_s);
-        debug(DEEPROM, "New settings saved to EEPROM");        
-        return 1;
-      }
-      debug(DCOMMAND, "Wrong range 0-1",1);
-      return 0;
-    };
-
-  int set_settings_val_str(WMSettings *_s, String _command, String _valStr, char const* _setting_val_char_array, int _max_len) {
-      bool recognize = 0;
-     
-      if (strlen(_setting_val_char_array)<_max_len) {
-        _setting_val_char_array = _valStr.c_str();
-        recognize = 1;
-      }
-      if (recognize) {
-        debug(DCOMMAND, "Set new value ->" +String(_setting_val_char_array));
-        esave(_s);
-        debug(DEEPROM, "New settings saved to EEPROM");        
-        return 1;
-      }
-      debug(DCOMMAND, "Wrong range max len of string",1);
-      return 0;
-    };
-
 
 
 int do_set_command(WMSettings *_s, String cmdStr, String valStr){
@@ -193,51 +114,41 @@ int do_set_command(WMSettings *_s, String cmdStr, String valStr){
         String passStr = valStr.substring(valStr.indexOf('|')+1,valStr.length());
         debug(DCOMMAND, "Command->"+ ssidStr+", Value->"+passStr);
         debug(DCOMMAND, "Writing creds...");
+
+        //wifi begin without connect
         WiFi.begin(ssidStr.c_str(), passStr.c_str(), 0, NULL, false);
         struct station_config stationConf;
+        
         //os_memset(stationConf.ssid, 0, sizeof(stationConf.ssid));
 	      //os_memset(stationConf.password, 0, sizeof(stationConf.password));
 	      //snprintf(stationConf.ssid, sizeof(stationConf.ssid), "%s", ssidStr.c_str());
 	      //snprintf(stationConf.password, sizeof(stationConf.password), "%s", passStr.c_str());
-        //WiFi.begin(ssidStr.c_str(), passStr.c_str());
-       
+        
+        //trick to save wifi creds to EEPROM
         wifi_station_get_config(&stationConf);
         debug(DCOMMAND,"new saved ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|"); 
         wifi_station_set_config(&stationConf);
-        //mywifi_try_to_connect();
-        
-        //ESP.restart();
+       
         return 1;
       }
       debug(DCOMMAND,"Can't find `|` symbol in wifi|pass format");
   } 
+
+  if(cmdStr==CMD_MQTT_USER){
+    if (set_settings_val_str(_s,cmdStr,valStr,_s->mqttUser,12))return 1;
+  }
+  if(cmdStr==CMD_MQTT_PASS){
+    if (set_settings_val_str(_s,cmdStr,valStr,_s->mqttPass,22))return 1;
+  }
+    if(cmdStr==CMD_MQTT_SERVER){
+    if (set_settings_val_str(_s,cmdStr,valStr,_s->mqttServer,22))return 1;
+  }
+
   return 0;
 
 };
 
-void print_curr_settings(WMSettings *_s){
-  debug(DHELP, "Mdbus address->"+String(_s->custom_level1), TOUT);
-  debug(DHELP, "HOLD REGS->"+String(_s->custom_level2), TOUT);
-  debug(DHELP, "COIL REGS->"+String(_s->custom_level3), TOUT);
-  debug(DHELP, "BAUDRATE->"+String(_s->custom_level4), TOUT);
-  debug(DHELP, "PORT SERIAL NUM->"+String(_s->custom_level_notify1), TOUT);
-  debug(DHELP, "PORT SETTINGS->"+get_port_settings_string(_s->custom_level_notify1));
-}
 
-void print_welcome_help(){
-  debug(DHELP, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
-  debug(DHELP, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), " + String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>, "+ String(CMD_SET_COIL_REGS_AMOUNT) + "=<NUM_COILS>");
-  debug(DHELP, "help - get full help");
-}
-
-void print_full_help(){
-  debug(DHELP, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
-  debug(DHELP, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), ");
-  debug(DHELP, String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>");
-  debug(DHELP, String(CMD_SET_COIL_REGS_AMOUNT) + "=<NUM_COILS>");
-  debug(DHELP, String(CMD_SET_BAUDRATE) + "=<BAUDRATE> baudrate for modbus, possible values: 115200, 9600, 19200, 57600... or custom baudrate");
-  debug(DHELP, String(CMD_SET_PORT_SETTINGS) + "=<NUM_OF_SETTNGS> portsettings for modbus, possible values: \"=6\"->SERIAL_8N1, \"=38\"->SERIAL_8E1");
-}
 
 int do_espboot_loop(WMSettings * _s){
   String inCommandStr=""; 
