@@ -108,9 +108,9 @@ void setup() {
 
   if(WIFI_ENABLE){
     debug(DMAIN, "Init wifi settings");
-    //WiFi.persistent(false);
-    //WiFi.mode(WIFI_STA);
-    //WiFi.setAutoReconnect(true);
+    WiFi.persistent(false);
+    WiFi.mode(WIFI_STA);
+    WiFi.setAutoReconnect(true);
   }
  
 
@@ -130,19 +130,16 @@ void setup() {
   debug(DMAIN, "------ Start modbus emulation ------");
   print_curr_settings(_s);
 
-  ticker.attach(0.15,tickf);
-
   if(WIFI_ENABLE){
+    ticker.attach(0.15,tickf);
     struct station_config stationConf;
     wifi_station_get_config (&stationConf);
     debug(DWIFI,"Try with ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|");
     WiFi.begin();
-    
     mywifi_try_to_connect();
+    ticker.attach(0.25,tickf);
   }
   
-  ticker.attach(0.25,tickf);
-
   debug(DMAIN, "-------------------------------------");
   debug(DMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
   debug(DMAIN, "-------------------------------------");

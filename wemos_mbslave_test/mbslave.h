@@ -295,11 +295,11 @@ int do_espboot_loop(WMSettings * _s){
 }
 
 int correction_to_default_if_need(WMSettings *_s){
-
+    int was_corrected=0;
     if(_s->mb_modbus_address>MAX_ID) {
       debug(DEEPROM, "Modbus address is corrected to default", TOUT);
       _s->mb_modbus_address=DEFAULT_ADDRESS;
-      return 1;
+      was_corrected=1;
     }
     if(_s->mb_intregs_amount<MIN_INT_REGS || _s->mb_intregs_amount>MAX_INT_REGS) {
       debug(DEEPROM, "Int Regs amount is corrected to default", TOUT);
@@ -309,18 +309,19 @@ int correction_to_default_if_need(WMSettings *_s){
     if(_s->mb_coilregs_amount<MIN_COIL_REGS || _s->mb_coilregs_amount>MAX_COIL_REGS){
       debug(DEEPROM, "COIL Regs amount is corrected to default", TOUT);
       _s->mb_coilregs_amount=DEFAULT_COIL_REGS;
-      return 1;
+      was_corrected=1;
     } 
     if(_s->mb_serial_baudrate<MIN_BAUDRATE || _s->mb_serial_baudrate > MAX_BAUDRATE){
       debug(DEEPROM, "Serial BAUDRATE is corrected to default", TOUT);
       _s->mb_serial_baudrate=DEFAULT_MB_RATE;
-      return 1;
+      was_corrected=1;
     }  
     if(_s->mb_serial_settings_num<0 || _s->mb_serial_settings_num > MAX_SERIAL_VAR_NUM) {
       debug(DEEPROM, "Serial SETTINGS NUM is corrected to default", TOUT);
       _s->mb_serial_settings_num=NSERIAL_8E1;
-      return 1;
+      was_corrected=1;
     }
+    if(was_corrected)return 1;
     return 0;
 }
 
