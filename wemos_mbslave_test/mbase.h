@@ -6,7 +6,7 @@
 
 
 #define MEM_SIZE 512
-#define debug_level 1
+#define mb_debug_level 1
 
 #define DCOMMAND "COMMNAD"
 #define DERROR "ERROR"
@@ -37,7 +37,7 @@ void debug(String sourceStr, T debug,  int type=4, String preStr="") {
       Serial.println("\n");
       return;
     }
-    if (debug_level > 0){
+    if (mb_debug_level > 0){
        switch(type){
         case 0:
           Serial.print("DEBUG");

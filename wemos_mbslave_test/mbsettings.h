@@ -1,13 +1,19 @@
 #ifndef __mbsettings__
-#define __mbsttings__
+#define __mbsettings__
 
 #include "Arduino.h"
-#include "mbase.h"
-
 
 #define EEPROM_SALT 1664
 
 #define NUM_TRY 10   //waiting command pause
+
+#define MAX_QUEUE_WANTED 10
+
+enum pub_events { 
+ PUBLISHER_WANT_SAVE,
+ PUBLISHER_WANT_RESET,
+ PUBLISHER_WANT_SAY_JUST_SYNCED,
+};
 
 
 typedef struct {
@@ -96,6 +102,23 @@ typedef struct {
 
 #define  mb_serial_settings_num  custom_level_notify1
 //*******************************************************
+
+
+#define MIN_AUTOSTOP_SEC 0
+#define MAX_AUTOSTOP_SEC 1200
+#define MAX_AUTOOFF_HOURS 24
+#define MAX_LSCHM_NUM 100
+#define MAX_ANALOG_NOTIFY 50000
+#define MAX_HOURS_NOTIFY 1000
+#define MAX_PWR_TARIFF 10000
+#define MAX_LEVEL_DELTA 50000
+#define MIN_TEMP_LEVEL -5000
+#define MAX_TEMP_LEVEL 10000
+#define MAX_ANALOG_LEVEL 16000
+#define MAX_NOTIFY_CUSTOM 5000
+
+#define MIN_CUSTOM_LEVEL -32000
+#define MAX_CUSTOM_LEVEL 32000
 
 
 #endif

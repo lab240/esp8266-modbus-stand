@@ -2,11 +2,15 @@
 #include <EEPROM.h>
 #include <Ticker.h>
 #include <ESP8266TrueRandom.h>
-
+#include <PubSubClient.h>
+#include <Queue.h>
 #include "mbslave.h"
+#include "donofflib/dpublishmqtt.h"
+
 
 #define DEBUG 1
 #define WIFI_ENABLE 1
+#define MQTT_ENABLE 1
 #define POWER_PIN D1 //old version
 //#define POWER_PIN D5 //new version
 
@@ -52,6 +56,14 @@ WifiCreds wificreds;
 
 WMSettings * _s;
 
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+DPublisherMQTT pubmqtt(_s, &client);
+
+void callback(char* topic, byte* payload, unsigned int length);
+Queue<pub_events> que_wanted= Queue<pub_events>(MAX_QUEUE_WANTED);
+
 uint32_t softTimer = 0;       // переменная для захвата текущего времени
 //uint8_t modbus_address=0;
 uint32_t get_counter = 0;   
@@ -62,7 +74,17 @@ uint16_t cbReadHreg(TRegister* reg, uint16_t numregs){
   return reg->value;
 }
 
+void callback(char* topic, byte* payload, unsigned int length){
+  // Serial.println("nature callback");
+  pubmqtt.callback(topic,payload,length);
+}
+
 void setup() {
+
+  if(MQTT_ENABLE){
+    client.setCallback(callback);
+    pubmqtt.init(&que_wanted);
+  }
 
   led_mode_setup =1;
 
