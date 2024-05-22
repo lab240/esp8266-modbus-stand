@@ -20,7 +20,6 @@ void print_curr_settings(WMSettings *_s){
   debug(DHELP, "MQTT SERVER->"+String(_s->mqttServer));
   debug(DHELP, "MQTT USER->"+String(_s->mqttUser));
   debug(DHELP, "MQTT PASS->"+String(_s->mqttPass));
-
 }
 
 void print_welcome_help(){
@@ -36,6 +35,8 @@ void print_full_help(){
   debug(DHELP, String(CMD_SET_COIL_REGS_AMOUNT) + "=<NUM_COILS>");
   debug(DHELP, String(CMD_SET_BAUDRATE) + "=<BAUDRATE> baudrate for modbus, possible values: 115200, 9600, 19200, 57600... or custom baudrate");
   debug(DHELP, String(CMD_SET_PORT_SETTINGS) + "=<NUM_OF_SETTNGS> portsettings for modbus, possible values: \"=6\"->SERIAL_8N1, \"=38\"->SERIAL_8E1");
+  debug(DHELP, String(CMD_SSID) + "=<SSID|PASSWORD> wifi creds");
+  debug(DHELP, String(CMD_MQTT_SERVER) + "=<mqtt_serer>, "+ String(CMD_MQTT_USER)+"=<mqtt_user>, "+String(CMD_MQTT_PASS)+"=<mqtt_pass>, "+String(CMD_MQTT_PORT)+"=<mqtt_port>");
 }
 
 int set_settings_val_int(WMSettings *_s, String _command, String _valStr, int* _setting_val,  int _min =0, int _max=255) {

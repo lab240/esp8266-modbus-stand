@@ -2,24 +2,30 @@
 #include <EEPROM.h>
 #include <Ticker.h>
 #include <ESP8266TrueRandom.h>
+#include <ArduinoOTA.h>
+
 
 #include "mbslave.h"
 
 #define DEBUG 1
 #define WIFI_ENABLE 1
+
 #define POWER_PIN D1 //old version
 //#define POWER_PIN D5 //new version
 
-//#define LED_DATA D6
-
 #define LED_DATA LED_BUILTIN
+#define LED_CONNECT D6
 
+//#define LED_CONNECT LED_BUILTIN
+//#define LED_DATA D6
 //константы адреса модбас регистра -1 для правильного отображения в mbpool
+
 #define NUM_TRY 10
 
 // #define EXTRAREGS 5 
 
 #define MAXEXTRAREGS 255 
+
 
 // #define modbus_address settings.custom_level1
 // #define intregs_amount settings.custom_level2
@@ -52,10 +58,13 @@ WifiCreds wificreds;
 
 WMSettings * _s;
 
+uint led_mode_setup =1;
+uint led_mode_connecting =0;
+
 uint32_t softTimer = 0;       // переменная для захвата текущего времени
 //uint8_t modbus_address=0;
 uint32_t get_counter = 0;   
-uint led_mode_setup;
+
 
 uint16_t cbReadHreg(TRegister* reg, uint16_t numregs){
   digitalWrite(LED_DATA,HIGH);
@@ -64,11 +73,14 @@ uint16_t cbReadHreg(TRegister* reg, uint16_t numregs){
 
 void setup() {
 
-  led_mode_setup =1;
-
   pinMode(LED_DATA, OUTPUT);
+  pinMode(LED_CONNECT, OUTPUT);
+  digitalWrite(LED_CONNECT,HIGH);
+  delay(1000);
+  digitalWrite(LED_CONNECT,LOW);
   
   ticker.attach(0.25,tickf);
+  //ticker.attach(0.5,tickd);
 
   _s=new(WMSettings);
 
@@ -133,13 +145,45 @@ void setup() {
   print_curr_settings(_s);
 
   if(WIFI_ENABLE){
-    ticker.attach(0.15,tickf);
+    led_mode_connecting=1;
     struct station_config stationConf;
     wifi_station_get_config (&stationConf);
     debug(DWIFI,"Try with ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|");
     WiFi.begin();
     mywifi_try_to_connect();
-    ticker.attach(0.25,tickf);
+    led_mode_connecting=0;
+  }
+
+  if(WIFI_ENABLE){
+      
+      ArduinoOTA.onStart([]() {
+        led_mode_setup=1;
+        ticker.attach(0.15,tickf);
+        digitalWrite(POWER_PIN, LOW);
+        Serial.swap();
+        Serial.println("Start");
+      });
+
+      ArduinoOTA.onEnd([]() {
+        Serial.println("\nEnd");
+        digitalWrite(POWER_PIN, HIGH);
+        Serial.swap();
+        led_mode_setup=1;
+        ESP.reset();
+      });
+      
+      ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+      });
+      ArduinoOTA.onError([](ota_error_t error) {
+        Serial.printf("Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+        else if (error == OTA_END_ERROR) Serial.println("End Failed");
+      });
+      ArduinoOTA.begin();
   }
   
   debug(DMAIN, "-------------------------------------");
@@ -176,6 +220,8 @@ void setup() {
 
 void loop() {
 
+  if(WIFI_ENABLE) ArduinoOTA.handle();
+
   mbus_obj.task(); // слушаем модбас
   //yield();   // отпускаем для обработки Wi-Fi
   if(softTimer<(millis())) update_regs(); // обновляем регистры по таймеру
@@ -211,12 +257,30 @@ void update_regs(){
 } 
 
 void tickf(){
+
+  //led setup &data
   if(led_mode_setup) {
     digitalWrite(LED_DATA, !digitalRead(LED_DATA));
   }else{
   //digitalWrite(LED_DATA, !digitalRead(LED_DATA));
     digitalWrite(LED_DATA, LOW);
   }
+
+  //Led connectig 
+  if(led_mode_connecting){
+    digitalWrite(LED_CONNECT, !digitalRead(LED_CONNECT));
+  }else if(WIFI_ENABLE && WiFi.status() == WL_CONNECTED) {
+    digitalWrite(LED_CONNECT, HIGH);
+  }else if (WIFI_ENABLE && WiFi.status() != WL_CONNECTED){
+    //digitalWrite(LED_CONNECT, !digitalRead(LED_CONNECT));
+    digitalWrite(LED_CONNECT,LOW);
+  }
+  else if(!WIFI_ENABLE){
+    digitalWrite(LED_CONNECT, LOW);
+  } 
+  
+  
 }
+
 
 
