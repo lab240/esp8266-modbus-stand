@@ -10,7 +10,8 @@
 #include <TimeLib.h>
 
 
-class DPublisherA: public DBase {
+
+class DPublisher: public DBase {
   protected:
 
     //String shStr;
@@ -46,7 +47,7 @@ public:
 
 
   public:
-    DPublisherA(WMSettings * __s): DBase(__s) {};
+    DPublisher(WMSettings * __s): DBase(__s) {};
 
      void init( Queue<pub_events>* _q) {
       que_wanted= _q;

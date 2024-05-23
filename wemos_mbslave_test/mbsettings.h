@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 
-#define EEPROM_SALT 1664
+#define EEPROM_SALT 1665
 
 #define NUM_TRY 10   //waiting command pause
 

@@ -7,6 +7,7 @@
 #define CMD_SET_BAUDRATE "setb"
 #define CMD_SET_PORT_SETTINGS "setp"
 
+
 #define CMD_CMD_HELP "help"
 #define CMD_CMD_PRINT "print"
 
@@ -17,5 +18,6 @@
 #define CMD_MQTT_PASS "mqttpass"
 #define CMD_MQTT_SERVER "mqttserver"
 #define CMD_MQTT_PORT "mqttport"
+#define CMD_MQTT_DEV "mqttdev"
 
 #endif

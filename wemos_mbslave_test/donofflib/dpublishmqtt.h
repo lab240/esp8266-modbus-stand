@@ -6,8 +6,12 @@
 #include "dbase.h"
 #include "dpublisher.h"
 #include <PubSubClient.h>
+#include "dpubsetting.h"
 
-class DPublisherMQTT : public DPublisherA
+#define MAX_CONNECT_ATTEMPTS_BEFORE_RESET 100
+#define DDOS_MS 1000  //period in MS between to incoming commands
+
+class DPublisherMQTT : public DPublisher
 {
 protected:
   int init_ok = 0;
@@ -65,7 +69,7 @@ public:
         time_t tnow = time(nullptr);
         struct tm * timeinfo;
 
-        debug("TIMESYNC", "TIME FROM SERVER:"+String(ctime(&tnow)), DINFO);
+        debug("TIMESYNC", "TIME FROM SERVER:"+String(ctime(&tnow)), DTINFO);
 
         timeinfo=localtime(&tnow);
 
@@ -80,7 +84,7 @@ public:
         setTime(timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, timeinfo->tm_mday, timeinfo->tm_mon, timeinfo->tm_year+1900);
 
         if(year()==1970){ //default date
-          debug("TIMESYNC", "FAIL TO SYNC TIME :(", DERROR);
+          debug("TIMESYNC", "FAIL TO SYNC TIME :(", DTERROR);
           time_synced=0;
         }else{
           debug("TIMESYNC", "TIME SYNCED:"+String(d_hour())+":"+String(minute())+":"+String(year())+":"+String(month())+"; push event");
@@ -99,16 +103,16 @@ public:
 
         debug("RECONNECT", "Try attemps:" + String(attempts));
         if(WiFi.status() == WL_CONNECTED){
-            debug("RECONNECT", "WIFI CONNECTED", DINFO);
-            debug("RECONNECT",  WiFi.localIP(), DINFO, "LOCAL IP");
-            debug("RECONNECT",  WiFi.gatewayIP(), DINFO, "GATEWAY");
-            //debug("RECONNECT",  WiFi.dnsIP(), DINFO, "DNS");
+            debug("RECONNECT", "WIFI CONNECTED", DTINFO);
+            debug("RECONNECT",  WiFi.localIP(), DTINFO, "LOCAL IP");
+            debug("RECONNECT",  WiFi.gatewayIP(), DTINFO, "GATEWAY");
+            //debug("RECONNECT",  WiFi.dnsIP(), DTINFO, "DNS");
         }
        
         if(attempts>MAX_CONNECT_ATTEMPTS_BEFORE_RESET && _s->autoreboot_on_max_attempts) reset();
       
         if (WiFi.status() != WL_CONNECTED) {
-            debug("RECONNECT", "NO WIFI CONNECTION->"+ String(WiFi.status()), DERROR);
+            debug("RECONNECT", "NO WIFI CONNECTION->"+ String(WiFi.status()), DTERROR);
             return 0;
         }
         
@@ -117,10 +121,10 @@ public:
 
         if(err !=1){
           debug("RECONNECTMQTT", "Cant resolve mqtt server");
-          debug("RECONNECTMQTT", WiFi.dnsIP(), DERROR, "DNS");
+          debug("RECONNECTMQTT", WiFi.dnsIP(), DTERROR, "DNS");
           return 0;
         }else{ 
-          debug("RECONNECTMQTT", result, DINFO, "MQTT_IP");
+          debug("RECONNECTMQTT", result, DTINFO, "MQTT_IP");
         }
 
         int port = atoi(_s->mqttPort);
@@ -134,11 +138,11 @@ public:
         debug("PUBLISHER", "Server=" + String(_s->mqttServer) + "| User:" + String(_s->mqttUser) + "| Pass:" + String(_s->mqttPass) + "| port=" + String(_s->mqttPort));
         //if (client.connect(clientId.c_str(),"xvjlwxhs","_k7d9m2yt0hn")) {
         if (_c->connect(clientId.c_str(), _s->mqttUser, _s->mqttPass)){
-          debug("PUBLISHER", "MQTT CONNECTED", DINFO);
+          debug("PUBLISHER", "MQTT CONNECTED", DTINFO);
           attempts=0;
           subscribe_all();
         }else{
-          debug("PUBLISHER", "MQTT FAILED TO CONNECT", DERROR);
+          debug("PUBLISHER", "MQTT FAILED TO CONNECT", DTERROR);
         }
         return 1;   
         
@@ -158,6 +162,7 @@ public:
         
         String formed_topic;
         formed_topic="/"+String(_s->mqttUser)+"/"+String(_s->dev_id)+String(short_topic);
+        //debug("MQTT", "Subscribe:"+formed_topic);
         _c->subscribe(formed_topic.c_str());
     };
 
@@ -180,6 +185,10 @@ public:
         }
       
     };
+
+    void mqtt_loop(){
+        if (_c->connected()) _c->loop();
+    }
 
     void callback(char* topic, byte* payload, unsigned int length){
         //debug("CALLBACK", String(topic)+"::"+String((char*)payload));
@@ -241,26 +250,6 @@ public:
 
     };
 
-    int virtual publish_sensor(DSensor * _sensor, uint _debug=0){
-       if (!is_connected()) {
-         debug("PUB_SENSOR", "mqtt DISCONNECTED");
-         return 0;   
-       }
-       if(_debug) debug("PUB_SENSOR",form_full_topic(_sensor->get_channelStr())+_sensor->get_val_Str());
-      _c->publish(form_full_topic(_sensor->get_channelStr()).c_str(), _sensor->get_val_Str().c_str());
-      if(_sensor->need_publish_json() && is_time_synced()){
-         publish_sensor_json(_sensor);
-      }
-      return 1;
-    };
-
-    int virtual publish_multi_sensor(DMultiSensor * _multi_sensor){
-       if (!is_connected()) return 0;   
-      _c->publish(form_full_topic(_multi_sensor->get_channelStr()).c_str(), _multi_sensor->multi_json_Str().c_str());
-      debug("PUBLISHMULTI", "publish to:"+_multi_sensor->get_channelStr()+" , json:"+_multi_sensor->multi_json_Str() );
-      return 1;
-    };
-
     int virtual publish_uptime()
     {
       if (!is_connected()) return 0;
@@ -268,21 +257,6 @@ public:
       return 1;
 
     };
-
-    int virtual publish_ontime(DRelay * _r)
-    {
-      if (!is_connected()) return 0;
-      _c->publish(form_full_topic(_r->get_ontime_channel_str()).c_str(), _r->get_ontime_str().c_str());
-      return 1;
-    };
-
-    int virtual publish_downtime(DRelay * _r)
-    {
-      if (!is_connected()) return 0;
-     _c->publish(form_full_topic(_r->get_downtime_channel_str()).c_str(), _r->get_downtime_str().c_str());
-     return 1;
-    };
-
 
     int virtual publish_to_topic(String _topic, String _valStr){
         _c->publish(form_full_topic(_topic).c_str(), _valStr.c_str());

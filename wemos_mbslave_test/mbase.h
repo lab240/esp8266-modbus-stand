@@ -8,16 +8,17 @@
 #define MEM_SIZE 512
 #define mb_debug_level 1
 
-#define DCOMMAND "COMMNAD"
-#define DERROR "ERROR"
-#define DEEPROM "EEPROM"
-#define DMAIN "MAIN"
-#define DHELP "HELP"
-#define DWIFI "WIFI"
+//sorce debug
+#define DSCOMMAND "COMMNAD"
+#define DSEEPROM "EEPROM"
+#define DSMAIN "MAIN"
+#define DSHELP "HELP"
+#define DSWIFI "WIFI"
+#define DSERROR "ERROR"
 
-#define DENTER "DENTER" // same Serial.println("\n")
+#define DSENTER "DENTER" // same Serial.println("\n")
 
-
+//out type of debug
 #define TERROR 1 //ошибки будут при любом дебаге
 #define TOUT 4   //обязательные сообщения, будут при любом дебаге
 #define TINFO 3  //информационныен сообщения, не будет при дебаг=0
@@ -33,7 +34,7 @@ void eload(WMSettings* _s){
 template <typename T>
 void debug(String sourceStr, T debug,  int type=4, String preStr="") {
     //Serial.print("dl:"+String (debug_level));
-    if(sourceStr==DENTER){
+    if(sourceStr==DSENTER){
       Serial.println("\n");
       return;
     }

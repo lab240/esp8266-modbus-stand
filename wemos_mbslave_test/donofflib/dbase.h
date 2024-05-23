@@ -4,6 +4,15 @@
 #include "Arduino.h"
 #include "../mbsettings.h"
 
+enum debug_events{
+  DTUNDEF,
+  DTERROR,
+  DTWARNING,
+  DTINFO,
+  DTOUT
+};
+
+
 class DBase {
   protected:
     

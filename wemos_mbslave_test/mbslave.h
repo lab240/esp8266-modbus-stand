@@ -51,7 +51,7 @@ int mywifi_try_to_connect(){
       Serial.println(ip);
       return 1;
   }else{
-      debug(DWIFI, "WIFI_NOT_CONNECTED");
+      debug(DSWIFI, "WIFI_NOT_CONNECTED");
       return 1;
   }
 };
@@ -107,13 +107,13 @@ int do_set_command(WMSettings *_s, String cmdStr, String valStr){
   if (cmdStr == CMD_SET_PORT_SETTINGS)
       if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->mb_serial_settings_num, 1, MAX_SERIAL_VAR_NUM)) return 1;
   if (cmdStr == CMD_SSID){
-      debug(DCOMMAND, "Wifi Creds, push ssid="+valStr);
+      debug(DSCOMMAND, "Wifi Creds, push ssid="+valStr);
       
       if(valStr.indexOf('|')!=-1){  
         String ssidStr=  valStr.substring(0,valStr.indexOf('|'));
         String passStr = valStr.substring(valStr.indexOf('|')+1,valStr.length());
-        debug(DCOMMAND, "Command->"+ ssidStr+", Value->"+passStr);
-        debug(DCOMMAND, "Writing creds...");
+        debug(DSCOMMAND, "Command->"+ ssidStr+", Value->"+passStr);
+        debug(DSCOMMAND, "Writing creds...");
 
         //wifi begin without connect
         WiFi.begin(ssidStr.c_str(), passStr.c_str(), 0, NULL, false);
@@ -126,12 +126,12 @@ int do_set_command(WMSettings *_s, String cmdStr, String valStr){
         
         //trick to save wifi creds to EEPROM
         wifi_station_get_config(&stationConf);
-        debug(DCOMMAND,"new saved ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|"); 
+        debug(DSCOMMAND,"new saved ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|"); 
         wifi_station_set_config(&stationConf);
        
         return 1;
       }
-      debug(DCOMMAND,"Can't find `|` symbol in wifi|pass format");
+      debug(DSCOMMAND,"Can't find `|` symbol in wifi|pass format");
   } 
 
   if(cmdStr==CMD_MQTT_USER){
@@ -140,8 +140,11 @@ int do_set_command(WMSettings *_s, String cmdStr, String valStr){
   if(cmdStr==CMD_MQTT_PASS){
     if (set_settings_val_str(_s,cmdStr,valStr,_s->mqttPass,22))return 1;
   }
-    if(cmdStr==CMD_MQTT_SERVER){
+  if(cmdStr==CMD_MQTT_SERVER){
     if (set_settings_val_str(_s,cmdStr,valStr,_s->mqttServer,22))return 1;
+  }
+  if(cmdStr==CMD_MQTT_DEV){
+    if (set_settings_val_str(_s,cmdStr,valStr,_s->dev_id,10))return 1;
   }
 
   return 0;
@@ -158,21 +161,21 @@ int do_espboot_loop(WMSettings * _s){
 
     inCommandStr=get_command_str();
     
-    debug(DENTER,0);
+    debug(DSENTER,0);
     
     if(inCommandStr!=""){
-      debug(DCOMMAND, "Received incoming string->"+String(inCommandStr));
+      debug(DSCOMMAND, "Received incoming string->"+String(inCommandStr));
      
       //skip loop command
       if( inCommandStr.length()<=3 && inCommandStr.charAt(0)==SKIP_CHAR) {
-        debug(DCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Skip waiting command", TOUT);
+        debug(DSCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Skip waiting command", TOUT);
         stop_commnads=1;
         return 0;
       }
 
      if(inCommandStr.length()>3 && inCommandStr.indexOf('=')==-1){
         //commands 
-        debug(DCOMMAND,"command >" +String(inCommandStr) +"< incoming");
+        debug(DSCOMMAND,"command >" +String(inCommandStr) +"< incoming");
         if(inCommandStr.startsWith(CMD_CMD_HELP)){
           print_full_help();
         }
@@ -186,17 +189,17 @@ int do_espboot_loop(WMSettings * _s){
 
         String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
         String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
-        debug(DCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
+        debug(DSCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
         if(!do_set_command(_s, cmdStr, numStr)) {
-          debug(DCOMMAND,"Wrong set parameter or value->"+cmdStr);
+          debug(DSCOMMAND,"Wrong set parameter or value->"+cmdStr);
         }
       
       }else{
-        debug(DCOMMAND, "Commnad is not recognized", TOUT);
+        debug(DSCOMMAND, "Commnad is not recognized", TOUT);
       }
     
     }else{
-      debug(DCOMMAND, "No incomming string");
+      debug(DSCOMMAND, "No incomming string");
       stop_commnads=1;
       return 0;
     }
@@ -208,27 +211,27 @@ int do_espboot_loop(WMSettings * _s){
 int correction_to_default_if_need(WMSettings *_s){
     int was_corrected=0;
     if(_s->mb_modbus_address>MAX_ID) {
-      debug(DEEPROM, "Modbus address is corrected to default", TOUT);
+      debug(DSEEPROM, "Modbus address is corrected to default", TOUT);
       _s->mb_modbus_address=DEFAULT_ADDRESS;
       was_corrected=1;
     }
     if(_s->mb_intregs_amount<MIN_INT_REGS || _s->mb_intregs_amount>MAX_INT_REGS) {
-      debug(DEEPROM, "Int Regs amount is corrected to default", TOUT);
+      debug(DSEEPROM, "Int Regs amount is corrected to default", TOUT);
       _s->mb_intregs_amount=DEFAULT_INT_REGS;
       return 1;
     }
     if(_s->mb_coilregs_amount<MIN_COIL_REGS || _s->mb_coilregs_amount>MAX_COIL_REGS){
-      debug(DEEPROM, "COIL Regs amount is corrected to default", TOUT);
+      debug(DSEEPROM, "COIL Regs amount is corrected to default", TOUT);
       _s->mb_coilregs_amount=DEFAULT_COIL_REGS;
       was_corrected=1;
     } 
     if(_s->mb_serial_baudrate<MIN_BAUDRATE || _s->mb_serial_baudrate > MAX_BAUDRATE){
-      debug(DEEPROM, "Serial BAUDRATE is corrected to default", TOUT);
+      debug(DSEEPROM, "Serial BAUDRATE is corrected to default", TOUT);
       _s->mb_serial_baudrate=DEFAULT_MB_RATE;
       was_corrected=1;
     }  
     if(_s->mb_serial_settings_num<0 || _s->mb_serial_settings_num > MAX_SERIAL_VAR_NUM) {
-      debug(DEEPROM, "Serial SETTINGS NUM is corrected to default", TOUT);
+      debug(DSEEPROM, "Serial SETTINGS NUM is corrected to default", TOUT);
       _s->mb_serial_settings_num=NSERIAL_8E1;
       was_corrected=1;
     }

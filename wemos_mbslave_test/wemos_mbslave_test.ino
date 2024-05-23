@@ -6,6 +6,7 @@
 #include <Queue.h>
 #include "mbslave.h"
 #include "donofflib/dpublishmqtt.h"
+#include "donofflib/ddevice.h"
 
 
 #define DEBUG 1
@@ -59,9 +60,13 @@ WMSettings * _s;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-DPublisherMQTT pubmqtt(_s, &client);
+// DPublisherMQTT pubmqtt(_s, &client);
+// DDevice mb_dev(_s);
 
-void callback(char* topic, byte* payload, unsigned int length);
+DPublisherMQTT* publisher_mqtt;
+DDevice* mb_dev;
+
+//void callback(char* topic, byte* payload, unsigned int length);
 Queue<pub_events> que_wanted= Queue<pub_events>(MAX_QUEUE_WANTED);
 
 uint32_t softTimer = 0;       // переменная для захвата текущего времени
@@ -75,15 +80,30 @@ uint16_t cbReadHreg(TRegister* reg, uint16_t numregs){
 }
 
 void callback(char* topic, byte* payload, unsigned int length){
-  // Serial.println("nature callback");
-  pubmqtt.callback(topic,payload,length);
+  publisher_mqtt->callback(topic,payload,length);
 }
 
 void setup() {
+  Serial.begin(115200, SERIAL_8N1);  
+  delay(1000);
+
+  Serial.println("************ Starting ********************");
 
   if(MQTT_ENABLE){
+
+    WMSettings defaults;
+    _s=new(WMSettings);
+    *_s=defaults;
+    Serial.println("DEV="+String(_s->dev_id)+", port="+String(_s->mqttPort));
+    
+    
     client.setCallback(callback);
-    pubmqtt.init(&que_wanted);
+    publisher_mqtt=new DPublisherMQTT(_s, &client);
+    publisher_mqtt->init(&que_wanted);
+    
+    mb_dev=new DDevice(_s);
+    mb_dev->init(publisher_mqtt, &que_wanted);
+
   }
 
   led_mode_setup =1;
@@ -92,21 +112,19 @@ void setup() {
   
   ticker.attach(0.25,tickf);
 
-  _s=new(WMSettings);
-
   Serial.begin(115200, SERIAL_8N1);  
   delay(1000);
 
   eload(_s);
 
-   debug(DEEPROM, "Setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt),  TOUT);
+   debug(DSEEPROM, "Setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt),  TOUT);
    print_curr_settings(_s);
 
-  debug(DEEPROM, "Salt="+String(_s->salt)+"; Address="+String(_s->mb_modbus_address)+"; RegsI="+String(_s->mb_intregs_amount)+"; RegsC="+String(_s->mb_coilregs_amount));
+  debug(DSEEPROM, "Salt="+String(_s->salt)+"; Address="+String(_s->mb_modbus_address)+"; RegsI="+String(_s->mb_intregs_amount)+"; RegsC="+String(_s->mb_coilregs_amount));
   //debug(DEEPROM, "Salt="+String(_s->salt)+"; Address="+String(_s->custom_level1)+"; RegsI="+String(_s->custom_level2)+"; RegsC="+String(_s->custom_level3));
 
   if (_s->salt != EEPROM_SALT) {
-    debug(DEEPROM, "Invalid settings in EEPROM, trying with defaults",TERROR);
+    debug(DSEEPROM, "Invalid settings in EEPROM, trying with defaults",TERROR);
     WMSettings defaults;
     *_s = defaults;
     _s->mb_modbus_address=DEFAULT_ADDRESS; //по умолчанию пусть будет 126й адрес
@@ -116,7 +134,7 @@ void setup() {
     serial_settings=DEFAULT_MB_FC;
     _s->mb_serial_settings_num=NSERIAL_8E1; //SERIAL_8E1
 
-    debug(DEEPROM, "DEFAULTS: Salt="+String(_s->salt), TOUT);
+    debug(DSEEPROM, "DEFAULTS: Salt="+String(_s->salt), TOUT);
     print_curr_settings(_s);
     
   }else{
@@ -125,13 +143,13 @@ void setup() {
  
     serial_settings=get_serial_sttings_from_num(_s->mb_serial_settings_num); 
     if(is_corrected) {
-      debug(DEEPROM, "LOADED from EEPROM with correction", TOUT);
+      debug(DSEEPROM, "LOADED from EEPROM with correction", TOUT);
       print_curr_settings(_s);
     }
   }
 
   if(WIFI_ENABLE){
-    debug(DMAIN, "Init wifi settings");
+    debug(DSMAIN, "Init wifi settings");
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
@@ -140,43 +158,43 @@ void setup() {
 
   // инициализируем уарт с параметрами стандартного монитора порта
 
-  debug(DENTER,0);
+  debug(DSENTER,0);
   print_welcome_help();
  
-  debug(DMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
-  debug(DENTER,0);
+  debug(DSMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
+  debug(DSENTER,0);
  
   //loop of setup progs
   do_espboot_loop(_s);  
 
-  debug(DENTER,0); // \n
+  debug(DSENTER,0); // \n
 
-  debug(DMAIN, "------ Start modbus emulation ------");
+  debug(DSMAIN, "------ Start modbus emulation ------");
   print_curr_settings(_s);
 
   if(WIFI_ENABLE){
     ticker.attach(0.15,tickf);
     struct station_config stationConf;
     wifi_station_get_config (&stationConf);
-    debug(DWIFI,"Try with ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|");
+    debug(DSWIFI,"Try with ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|");
     WiFi.begin();
     mywifi_try_to_connect();
     ticker.attach(0.25,tickf);
   }
   
-  debug(DMAIN, "-------------------------------------");
-  debug(DMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
-  debug(DMAIN, "-------------------------------------");
+  debug(DSMAIN, "-------------------------------------");
+  debug(DSMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
+  debug(DSMAIN, "-------------------------------------");
 
   ::delay(200);  // дожидаемся окончания передач в уарт
   
-
+/*
   //Serial.begin(serial_baudrate, (uint8_t) serial_settings_num); // инициализация уарт с настройками для Модбас
   Serial.begin(_s->mb_serial_baudrate, serial_settings); // инициализация уарт с настройками для Модбас
   pinMode(POWER_PIN, OUTPUT);
   digitalWrite(POWER_PIN, HIGH);
   Serial.swap();
-
+*/
   mbus_obj.begin(&Serial);  //указание порта для модбас
   mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
 
@@ -198,7 +216,10 @@ void setup() {
 
 void loop() {
 
-  mbus_obj.task(); // слушаем модбас
+  //mbus_obj.task(); // слушаем модбас
+  //if (client.connected()) client.loop();
+  mb_dev->supply_loop();
+
   //yield();   // отпускаем для обработки Wi-Fi
   if(softTimer<(millis())) update_regs(); // обновляем регистры по таймеру
 }
