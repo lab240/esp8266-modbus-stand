@@ -4,8 +4,9 @@
 #include <ESP8266WiFi.h>       
 #include "Arduino.h"
 #include "mbase.h"
-#include "commands.h"
+#include "mbcommands.h"
 #include "mbserial.h"
+#include "donofflib/dpublishmqtt.h"
 
 void print_curr_settings(WMSettings *_s){
   debug(DSHELP, "Mdbus address->"+String(_s->custom_level1), TOUT);

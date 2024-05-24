@@ -2,30 +2,54 @@
 #define dpublishermqtt_h
 
 //#include <TZ.h>
+//#include <PubSubClient.h>
+//#include <ESP8266WiFi.h>
+
 #include "dcommands.h"
 #include "dbase.h"
 #include "dpublisher.h"
-#include <PubSubClient.h>
+
 #include "dpubsetting.h"
 
 #define MAX_CONNECT_ATTEMPTS_BEFORE_RESET 100
 #define DDOS_MS 1000  //period in MS between to incoming commands
 
-class DPublisherMQTT : public DPublisher
+
+
+class DPublisherMqtt : public DPublisher
 {
 protected:
   int init_ok = 0;
   const int reconnect_period = 30;
   ulong last_connect_attempt;
-  PubSubClient* _c;
-  int not_configured=0;
+  PubSubClient* _c1;
+  int mqtt_not_configured=0;
   int time_synced=0;
   ulong m_incoming_ms=0;
   uint attempts=0;
 
+  WiFiClient *_wifi_client;
+  PubSubClient * _c;
+    
 public:
-  DPublisherMQTT(WMSettings *__s, PubSubClient *__c) : DPublisher(__s){
-        _c=__c;
+  DPublisherMqtt(WMSettings *__s, PubSubClient *__c, uint _ext_mqtt=1) : DPublisher(__s){
+        
+        if(_ext_mqtt){
+          //get extarnal pointer to mqtt client
+          _c=__c;  
+        }else{
+          //create instance of pubsub class inside (here)
+          _wifi_client=new WiFiClient();
+          _c = new PubSubClient();
+          _c->setClient(*_wifi_client);
+          using std::placeholders::_1;
+          using std::placeholders::_2;
+          using std::placeholders::_3;
+          _c->setCallback(std::bind( &DPublisherMqtt::callback, this, _1,_2,_3));
+
+        }
+
+        if (String(_s->dev_id) == "epmty_dev") mqtt_not_configured=1;
   };
 
   void init(Queue<pub_events> *_q){
@@ -40,7 +64,7 @@ public:
     int virtual is_connected()
     {
       //Serial.print(WiFi.status());
-      if (not_configured)
+      if (mqtt_not_configured)
       {
         //Serial.println("CONNECT: not_configured dtected, dev_id empty");
         return 0;
@@ -62,6 +86,7 @@ public:
       else
         return 0;
     };
+
 
     int virtual sync_time(int forced=0){
         if(forced==0 && time_synced==1) return 0;
@@ -93,12 +118,12 @@ public:
         }
     };
 
-    int virtual is_time_synced()
+   int virtual is_time_synced()
     {
 
       return time_synced;
     };
-
+ 
     int virtual try_connect(){
 
         debug("RECONNECT", "Try attemps:" + String(attempts));
@@ -116,6 +141,11 @@ public:
             return 0;
         }
         
+        if (mqtt_not_configured){
+          debug("RECONNECTMQTT", "MQTT IS NOT CONFIGRED (maybe dev_id=empty_dev)");
+          return 0;
+        }
+
         IPAddress result;
         int err = WiFi.hostByName(_s->mqttServer, result) ;
 
@@ -265,6 +295,19 @@ public:
 
   };
 
+
+
+/*void pubsub_callback(char* topic, byte* payload, unsigned int length) {
+    DPublisherMqtt::callback(topic, payload,length);
+    Serial.print("Message arrived [");
+    Serial.print(topic);
+    Serial.print("] ");
+    for (int i=0;i<length;i++) {
+      Serial.print((char)payload[i]);
+    }
+    Serial.println();
+ }
+ */
 
 
 #endif

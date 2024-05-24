@@ -10,6 +10,8 @@
     #define DOFFLINE 0
 #endif
 
+#define DEVICE_VERBOSE 1
+
 
 #define MAX_LOOPS 10
 #define MAX_SENSORS 10
@@ -38,12 +40,12 @@ class DDevice: public DBase {
 
     Queue<pub_events>* que_wanted;
     
-    DPublisherMQTT* pub;
+    DPublisherMqtt* pub;
    
   public:
     DDevice(WMSettings * __s): DBase(__s) {};
 
-    void init(DPublisherMQTT* _pub, Queue<pub_events>* _q) {
+    void init(DPublisherMqtt* _pub, Queue<pub_events>* _q) {
 
       pub = _pub;
       que_wanted=_q;
@@ -104,23 +106,23 @@ class DDevice: public DBase {
     void virtual very_slow_loop(int counter){
           
           if(counter % 10 == 0 && counter!=0){ 
-              debug("SLOWLOOP", "1 MINUTE, counter="+String(counter));
+              if(DEVICE_VERBOSE) debug("SLOWLOOP", "1 MINUTE, counter="+String(counter));
               one_minute_loop();
           }
 
 
           if(counter % 100 == 1 && counter!=0){   
-              debug("SLOWLOOP", " 10 MINUTES, counter="+String(counter));
+              if(DEVICE_VERBOSE) debug("SLOWLOOP", " 10 MINUTES, counter="+String(counter));
               ten_minutes_loop();
           }
 
           if((counter == 302 || counter==598) && counter!=0){           
-              debug("SLOWLOOP", "30 MINUTES, counter="+String(counter));
+              if(DEVICE_VERBOSE) debug("SLOWLOOP", "30 MINUTES, counter="+String(counter));
               thirty_minutes_loop();
           }
 
           if(counter==599 && counter!=0){           
-              debug("SLOWLOOP", " one_hour, counter="+String(counter));
+              if(DEVICE_VERBOSE) debug("SLOWLOOP", " one_hour, counter="+String(counter));
               one_hour_loop();
           }
 
@@ -157,7 +159,7 @@ class DDevice: public DBase {
 
       if (que_wanted->count()==0) return 0;
 
-      debug("SUPPLY_QUEUE", "WANTED EVENT DETECTED:"+String(what_to_want));
+      if(DEVICE_VERBOSE) debug("SUPPLY_QUEUE", "WANTED EVENT DETECTED:"+String(what_to_want));
       what_to_want=que_wanted->pop();
 
       if(what_to_want==PUBLISHER_WANT_SAY_JUST_SYNCED){
@@ -194,7 +196,8 @@ class DDevice: public DBase {
 
     void virtual service_loop() {
 
-      debug("SHEDULER", "**Service loop->TIMESTAMP=" +  s_get_timestamp('<','>') + ", t_sync=" + String(pub->is_time_synced())+ 
+      if(DEVICE_VERBOSE) 
+       debug("SHEDULER", "**Service loop->TIMESTAMP=" +  s_get_timestamp('<','>') + ", t_sync=" + String(pub->is_time_synced())+ 
            ", user="+ String(_s->mqttUser)+", dev_id=" + String(_s->dev_id)+" ,online="+String(pub->is_connected())+
            ", size_s="+String(sizeof(*_s))
        );

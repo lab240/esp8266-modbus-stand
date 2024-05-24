@@ -9,7 +9,8 @@
 #include <Queue.h>
 #include <TimeLib.h>
 
-
+#define PUBLISH_VERBOSE 1
+#define RECONNECT_VERBOSE 1
 
 class DPublisher: public DBase {
   protected:

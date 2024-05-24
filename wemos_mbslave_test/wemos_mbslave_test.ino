@@ -4,10 +4,13 @@
 #include <ESP8266TrueRandom.h>
 #include <PubSubClient.h>
 #include <Queue.h>
+
+#include <ESP8266WiFi.h>
+
 #include "mbslave.h"
 #include "donofflib/dpublishmqtt.h"
 #include "donofflib/ddevice.h"
-
+#include "mbpublish.h"
 
 #define DEBUG 1
 #define WIFI_ENABLE 1
@@ -63,7 +66,7 @@ PubSubClient client(espClient);
 // DPublisherMQTT pubmqtt(_s, &client);
 // DDevice mb_dev(_s);
 
-DPublisherMQTT* publisher_mqtt;
+DPublisherMqtt* publisher_mqtt;
 DDevice* mb_dev;
 
 //void callback(char* topic, byte* payload, unsigned int length);
@@ -97,8 +100,9 @@ void setup() {
     Serial.println("DEV="+String(_s->dev_id)+", port="+String(_s->mqttPort));
     
     
-    client.setCallback(callback);
-    publisher_mqtt=new DPublisherMQTT(_s, &client);
+    //client.setCallback(callback);
+    //publisher_mqtt=new DPublisherMqtt(_s, &client);
+    publisher_mqtt=new DPublisherMqttMBstand(_s, nullptr, 0);
     publisher_mqtt->init(&que_wanted);
     
     mb_dev=new DDevice(_s);
