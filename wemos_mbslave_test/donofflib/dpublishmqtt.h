@@ -145,10 +145,14 @@ public:
           debug("RECONNECTMQTT", "MQTT IS NOT CONFIGRED (maybe dev_id=empty_dev)");
           return 0;
         }
-
+        //if dev_id is not configured, exit
+        if(String(_s->dev_id) == "empty_dev"){
+          debug("RECONNECTMQTT", "MQTT DEV is empty", DTERROR, "MQTT_IP");
+        }
+        //check if name of mqtt correct
         IPAddress result;
         int err = WiFi.hostByName(_s->mqttServer, result) ;
-
+       
         if(err !=1){
           debug("RECONNECTMQTT", "Cant resolve mqtt server");
           debug("RECONNECTMQTT", WiFi.dnsIP(), DTERROR, "DNS");
@@ -156,6 +160,7 @@ public:
         }else{ 
           debug("RECONNECTMQTT", result, DTINFO, "MQTT_IP");
         }
+      
 
         int port = atoi(_s->mqttPort);
         _c->setServer(_s->mqttServer, port);

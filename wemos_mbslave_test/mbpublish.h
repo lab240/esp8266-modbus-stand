@@ -2,6 +2,8 @@
 #define __mbpublish1__
 
 #include "mbcommands.h"
+#include "mbserial.h"
+#include "mbsettings.h"
 #include "donofflib/dpublishmqtt.h"
 
 class DPublisherMqttMBstand : public DPublisherMqtt
@@ -28,6 +30,55 @@ public:
     };
 
 
+    int virtual show_parameters_loop() override {
+
+      if (shStr == C_HOLDREG) {
+        publish_sh_to_info_topic( shStr, String(_s->mb_intregs_amount));
+        return 1;
+      }
+
+      if (shStr == C_COILS) {
+        publish_sh_to_info_topic( shStr, String(_s->mb_coilregs_amount));
+        return 1;
+      }
+      
+      if (shStr == C_MBADDRESS) {
+        publish_sh_to_info_topic( shStr, String(_s->mb_modbus_address));
+        return 1;
+      }
+      
+      if (shStr == C_SERIALPORT) {
+        String resultStr=String(_s->mb_serial_baudrate)+"|";
+        resultStr+=get_serial_settings_string(_s->mb_serial_settings_num);
+        publish_sh_to_info_topic( shStr, resultStr);
+        return 1;
+      }
+
+      DPublisherMqtt::show_parameters_loop();
+    }
+
+   //return serialized String for /out/json channel
+   String virtual form_json_channel_string() override{
+      StaticJsonDocument <200> root;
+      String jsonStr="";
+      root["dev"] = _s->dev_id;
+      root["user"] = _s->mqttUser; 
+      root["mbaddress"] = _s->mb_modbus_address; 
+      root["mbhregs"] = _s->mb_intregs_amount;
+      root["mbcoils"] = _s->mb_coilregs_amount;
+      root["baudrate"] = _s->mb_serial_baudrate;
+      root["serialsettings"] = get_serial_settings_string(_s->mb_serial_settings_num);
+      root["timestamp"] = s_get_timestamp();
+
+      serializeJson(root, jsonStr);
+      debug("JSON", "Serialise:"+jsonStr);
+      return jsonStr;
+   }
+
+   //end class
 };
+
+
+
 
 #endif

@@ -20,4 +20,11 @@
 #define CMD_MQTT_PORT "mqttport"
 #define CMD_MQTT_DEV "mqttdev"
 
+//publisher commands
+
+#define C_HOLDREG "hregs"
+#define C_COILS "coils"
+#define C_MBADDRESS "mba"
+#define C_SERIALPORT "serial"
+
 #endif

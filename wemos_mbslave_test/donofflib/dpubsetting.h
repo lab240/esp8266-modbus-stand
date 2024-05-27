@@ -11,6 +11,7 @@
 const char INFO_CHANNEL[] = "/out/info";
 const char LOG_CHANNEL[] = "/out/log";
 const char UPTIME_CHANNEL[] = "/out/time_up";
+const char JSON_CHANNEL[] = "/out/json";
 
 const char PARAMS_CHANNEL[]="/in/params";
 

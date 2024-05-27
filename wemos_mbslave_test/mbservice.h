@@ -14,7 +14,7 @@ void print_curr_settings(WMSettings *_s){
   debug(DSHELP, "COIL REGS->"+String(_s->custom_level3), TOUT);
   debug(DSHELP, "BAUDRATE->"+String(_s->custom_level4), TOUT);
   debug(DSHELP, "PORT SERIAL NUM->"+String(_s->custom_level_notify1), TOUT);
-  debug(DSHELP, "PORT SETTINGS->"+get_port_settings_string(_s->custom_level_notify1));
+  debug(DSHELP, "PORT SETTINGS->"+get_serial_settings_string(_s->custom_level_notify1));
   struct station_config stationConf;
   wifi_station_get_config(&stationConf);
   debug(DSCOMMAND,"WIFI CREDS(ssid|pass)->" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)); 

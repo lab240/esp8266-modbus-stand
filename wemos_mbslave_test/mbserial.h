@@ -29,7 +29,7 @@
 #define NSERIAL_7O2 0x3C
 #define NSERIAL_8O2 0x3E //62
 
-SerialConfig get_serial_sttings_from_num(uint serial_settings_num){
+SerialConfig get_serial_setings_num(uint serial_settings_num){
   switch(serial_settings_num){
     case 38: return SERIAL_8E1;
     case 6: return SERIAL_8N1;
@@ -37,7 +37,7 @@ SerialConfig get_serial_sttings_from_num(uint serial_settings_num){
   return SERIAL_5N1;
 };
 
-String get_port_settings_string(uint serial_settings_num){
+String get_serial_settings_string(uint serial_settings_num){
   String outStr="";
   //debug("SERIAL", "serial_num->"+String(serial_settings_num));
   switch(serial_settings_num){

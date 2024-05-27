@@ -202,7 +202,11 @@ class DDevice: public DBase {
            ", size_s="+String(sizeof(*_s))
        );
 
-      if(pub->is_connected()) pub->publish_uptime();
+      if(pub->is_connected()){
+        pub->publish_uptime();
+        pub->publish_json();
+      } 
+      
    
     };
 

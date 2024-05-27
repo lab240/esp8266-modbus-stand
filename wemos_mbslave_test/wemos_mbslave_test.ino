@@ -145,7 +145,7 @@ void setup() {
     //check each parameter
     int is_corrected=correction_to_default_if_need(_s);
  
-    serial_settings=get_serial_sttings_from_num(_s->mb_serial_settings_num); 
+    serial_settings=get_serial_setings_num(_s->mb_serial_settings_num); 
     if(is_corrected) {
       debug(DSEEPROM, "LOADED from EEPROM with correction", TOUT);
       print_curr_settings(_s);

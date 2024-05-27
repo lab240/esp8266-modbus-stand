@@ -3,9 +3,11 @@
 
 
 //#include <PubSubClient.h>
-//#include <ArduinoJson.h>
+#include <ArduinoJson.h>
+//#include "jsonarduinolib/ArduinoJson-v6.21.5.h"
 #include "dcommands.h"
 #include "dbase.h"
+#include "dpubsetting.h"
 #include <Queue.h>
 #include <TimeLib.h>
 
@@ -180,7 +182,7 @@ public:
         String ssid = WiFi.SSID();
         String ipstring = WiFi.localIP().toString();
         //Serial.println("rssdb="+String(rssdb)+", SSID="+String(ssid)+" ,ip="+ipstring);
-        String outS = "SSID=" + ssid + ",rss=" + String(rssdb) + ",ip=" + String(ipstring);
+        String outS = "{SSID:" + ssid + ",rss=" + String(rssdb) + ",ip=" + String(ipstring);
         publish_to_info_topic(outS);
         return 1;
       }
@@ -203,7 +205,8 @@ public:
       return 0;
 
     };
-
+    
+    
     int virtual set_parameters_loop() {
 
       if (is_val_present == 0) {
@@ -278,6 +281,24 @@ public:
       }
     };
 */
+
+//return serialized String for /out/json channel
+   String virtual form_json_channel_string(){
+      StaticJsonDocument <200> root;
+      String jsonStr="";
+      root["dev"] = _s->dev_id;
+      root["user"] = _s->mqttUser; 
+      root["timestamp"] = s_get_timestamp();
+      serializeJson(root, jsonStr);
+      //debug("JSON", "Serialise:"+jsonStr);
+      return jsonStr;
+   };
+
+   void virtual publish_json(){
+    publish_to_topic(JSON_CHANNEL, form_json_channel_string());
+   }
+
+   
     int set_settings_val_bool(String _command, String _valStr, bool* _setting_val) {
       bool recognize = 0;
       if (_valStr.startsWith("0") && _valStr.length() == 1) {
