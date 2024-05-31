@@ -26,5 +26,7 @@
 #define C_COILS "coils"
 #define C_MBADDRESS "mba"
 #define C_SERIALPORT "serial"
+#define C_SERIAL_BAUDRATE "sbaud"
+#define C_SERIAL_SETTINGS "sparams"
 
 #endif
