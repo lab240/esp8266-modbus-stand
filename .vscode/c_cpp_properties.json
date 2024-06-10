@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Arduino",
-            "compilerPath": "/usr/bin/g++",
+            "compilerPath": "@/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/tools/warnings/none-g++",
             "compilerArgs": [
                 "-U__STRICT_ANSI__",
                 "-free",
@@ -17,14 +17,16 @@
             ],
             "intelliSenseMode": "gcc-x64",
             "includePath": [
-                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.0.2/tools/sdk/include",
-                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.0.2/tools/sdk/lwip2/include",
-                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.0.2/cores/esp8266",
-                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.0.2/variants/d1_mini",
-                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.0.2/libraries/EEPROM",
-                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.0.2/libraries/Ticker/src",
-                "/home/dmn/Arduino/libraries/",
-                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.0.2/libraries/ESP8266WiFi/src"
+                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/tools/sdk/include",
+                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/tools/sdk/lwip2/include",
+                "/tmp/arduino/sketches/A60C3848593392BB23591EAD8FB2F722/core",
+                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/cores/esp8266",
+                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/variants/d1_mini",
+                "/home/dmn/Arduino/libraries/modbus-esp8266/src",
+                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/EEPROM",
+                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/Ticker/src",
+                "/home/dmn/Arduino/libraries/ESP8266TrueRandom-master",
+                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/ESP8266WiFi/src"
             ],
             "forcedInclude": [
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/cores/esp8266/Arduino.h"
