@@ -32,6 +32,10 @@ void print_welcome_help(){
 
 void print_full_help(){
   debug(DSHELP, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
+  debug(DSHELP, String(CMD_SSID) + "=<SSID|PASSWORD> wifi creds");
+  debug(DSHELP, String(CMD_MQTT_SERVER) + "=<mqtt_server>, "+ String(CMD_MQTT_USER)+"=<mqtt_user>, "+String(CMD_MQTT_PASS)+"=<mqtt_pass>, "+String(CMD_MQTT_PORT)+"=<mqtt_port>");
+  debug(DSHELP, String(CMD_MQTT_DEV) + "=<mqtt_dev> unique name dev for mqtt");
+
   debug(DSHELP, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), ");
   debug(DSHELP, String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>");
   debug(DSHELP, String(CMD_SET_COIL_REGS_AMOUNT) + "=<NUM_COILS>");

@@ -49,7 +49,7 @@ public:
 
         }
 
-        if (String(_s->dev_id) == "epmty_dev") mqtt_not_configured=1;
+        if (String(_s->dev_id) == "empty_dev") mqtt_not_configured=1;
   };
 
   void init(Queue<pub_events> *_q){
@@ -111,10 +111,12 @@ public:
         if(year()==1970){ //default date
           debug("TIMESYNC", "FAIL TO SYNC TIME :(", DTERROR);
           time_synced=0;
+          return 0;
         }else{
           debug("TIMESYNC", "TIME SYNCED:"+String(d_hour())+":"+String(minute())+":"+String(year())+":"+String(month())+"; push event");
           que_wanted->push(PUBLISHER_WANT_SAY_JUST_SYNCED);
           time_synced=1;
+          return 1;
         }
     };
 
@@ -141,14 +143,20 @@ public:
             return 0;
         }
         
+        if (String(_s->dev_id) == "empty_dev") mqtt_not_configured=1; else mqtt_not_configured=0;
         if (mqtt_not_configured){
           debug("RECONNECTMQTT", "MQTT IS NOT CONFIGRED (maybe dev_id=empty_dev)");
           return 0;
         }
-        //if dev_id is not configured, exit
+        /*
+        //4if dev_id is not configured, exit
         if(String(_s->dev_id) == "empty_dev"){
           debug("RECONNECTMQTT", "MQTT DEV is empty", DTERROR, "MQTT_IP");
+          return 0;
         }
+
+        */
+
         //check if name of mqtt correct
         IPAddress result;
         int err = WiFi.hostByName(_s->mqttServer, result) ;

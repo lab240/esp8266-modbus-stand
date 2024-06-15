@@ -84,14 +84,14 @@ class DBase {
 
 void virtual save(){
      debug("SAVE", "Lets' save");
-     EEPROM.begin(MEM_SIZE);
+     EEPROM.begin(D_MEM_SIZE);
      EEPROM.put(0, *_s);
      EEPROM.commit();
      EEPROM.end();     
 };
 
 void load(){
-    EEPROM.begin(MEM_SIZE);
+    EEPROM.begin(D_MEM_SIZE);
     EEPROM.get(0, *_s);
     EEPROM.end();
 }

@@ -5,7 +5,7 @@
 #include "mbsettings.h"
 
 
-#define MEM_SIZE 512
+#define D_MEM_SIZE 512
 #define mb_debug_level 1
 
 //sorce debug
@@ -26,7 +26,7 @@
 #define TDEBUG 0
 
 void eload(WMSettings* _s){
-    EEPROM.begin(MEM_SIZE);
+    EEPROM.begin(D_MEM_SIZE);
     EEPROM.get(0, *_s);
     EEPROM.end();
 };
@@ -69,7 +69,7 @@ void debug(String sourceStr, T debug,  int type=4, String preStr="") {
 
 void esave(WMSettings* _s){
      debug("SAVE", "Lets' save");
-     EEPROM.begin(MEM_SIZE);
+     EEPROM.begin(D_MEM_SIZE);
      EEPROM.put(0, *_s);
      EEPROM.commit();
      EEPROM.end();     

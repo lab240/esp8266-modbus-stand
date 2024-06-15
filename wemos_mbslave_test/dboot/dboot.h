@@ -36,14 +36,20 @@ public:
         }
 
     void print_welcome_help(){
-        debug(DSHELP, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
+        debug(DSHELP, "-------------- Avaliable commands (wait for "+String(NUM_TRY)+" secs) -----------------");
         debug(DSHELP, "Press <C+Enter> to skip Dboot"
         debug(DSHELP, "help - get full help");
-        }
+
+        debug(DSHELP, "MQTT SERVER->"+String(_s->mqttServer));
+        debug(DSHELP, "MQTT USER->"+String(_s->mqttUser));
+        debug(DSHELP, "MQTT PASS->"+String(_s->mqttPass));
+    }
 
     void print_full_help(){
-        debug(DSHELP, "-------------- Avaliable commnads (wait for "+String(NUM_TRY)+" secs) -----------------");
+        debug(DSHELP, "-------------- Avaliable commands (wait for "+String(NUM_TRY)+" secs) -----------------");
         debug(DSHELP, "Press <C+Enter> to skip Dboot");
+        debug(DSHELP, String(CMD_SSID) + "=<SSID|PASSWORD> wifi creds");
+        debug(DSHELP, String(CMD_MQTT_SERVER) + "=<mqtt_serer>, "+ String(CMD_MQTT_USER)+"=<mqtt_user>, "+String(CMD_MQTT_PASS)+"=<mqtt_pass>, "+String(CMD_MQTT_PORT)+"=<mqtt_port>");
         }
 
 
@@ -126,9 +132,9 @@ public:
             }
             
             }else{
-            debug(DSCOMMAND, "No incomming string");
-            stop_commnads=1;
-            return 0;
+                debug(DSCOMMAND, "No incomming string");
+                stop_commnads=1;
+                return 0;
             }
 
         }
@@ -173,7 +179,7 @@ public:
         if(cmdStr==CMD_MQTT_SERVER){
             if (set_settings_val_str(_s,cmdStr,valStr,_s->mqttServer,22))return 1;
         }
-        
+
         if(cmdStr==CMD_MQTT_DEV){
             if (set_settings_val_str(_s,cmdStr,valStr,_s->dev_id,10))return 1;
         }

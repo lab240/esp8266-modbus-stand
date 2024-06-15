@@ -32,6 +32,11 @@ public:
 
     int virtual show_parameters_loop() override {
 
+      if(DPublisherMqtt::show_parameters_loop()){
+        //debug("PUBLISH", "Mother class returns 1");
+        return 1;
+      }
+
       if (shStr == C_HOLDREG) {
         publish_sh_to_info_topic( shStr, String(_s->mb_intregs_amount));
         return 1;
@@ -54,7 +59,8 @@ public:
         return 1;
       }
 
-      DPublisherMqtt::show_parameters_loop();
+      return 0;
+      
     }
 
    //return serialized String for /out/json channel

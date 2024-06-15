@@ -54,7 +54,7 @@ public:
 
      void init( Queue<pub_events>* _q) {
       que_wanted= _q;
-     }
+     };
 
 
     //int virtual publish_sensor(String channelStr, String dataStr){};
@@ -79,6 +79,27 @@ public:
       publish_to_info_topic("E: sh param not recognized");
       return 1;
     };
+
+    int virtual publish_help(){
+      if (!is_connected()) return 0;    
+      publish_to_info_topic("H: "+String(D_SH_HELP)+"|"+String(D_CMD_HELP));
+      return 1;
+    };
+
+    int virtual publish_show_help(){
+      if (!is_connected()) return 0;    
+      String helpStr=String(I_TIME)+"|"+String(I_NET)+"|"+String(I_SALT)+"|"+String(I_IS_SYNCED)+"|"+String(C_TIME_ZONE);
+      publish_to_info_topic("H:"+helpStr);
+      return 1;
+    };
+
+    int virtual publish_cmd_help(){
+      if (!is_connected()) return 0;    
+      String helpStr=String(D_RESET)+"|"+String(D_CLEAR)+"|"+String(D_SAVE);
+      publish_to_info_topic("H:"+helpStr);
+      return 1;
+    };
+
 
     void recognize_incoming_str(String _incomingStr) {
       bool autosave=0;
@@ -107,7 +128,14 @@ public:
 
         shStr = _incomingStr.substring(3, _incomingStr.length());
 
-        if(!show_parameters_loop()) publish_sh_err();
+        //remove space in the end of string
+        int space_index=shStr.indexOf(' ');
+        if(space_index!=-1){
+          shStr=shStr.substring(0,space_index);
+          debug("PUBLISH", "New shStr="+shStr);
+        }
+
+        if(show_parameters_loop()==0) publish_sh_err();
         //debug("RECOGNIZE", "sh val=" + shStr);
         
       }else {

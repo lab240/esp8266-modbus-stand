@@ -102,6 +102,9 @@ const char* D_RESET="reset";
 const char* D_SAVE="save";
 const char* D_DEFAULT="setdefault";
 
+const char* D_HELP="help";
+const char* D_SH_HELP="helpsh";
+const char* D_CMD_HELP="helpcmd";
 
 //const char* D_NOTIFY_DEF="zeronotify";
 //const char* D_ZERO_HLEVELS="zerohours";

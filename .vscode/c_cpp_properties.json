@@ -26,7 +26,11 @@
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/EEPROM",
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/Ticker/src",
                 "/home/dmn/Arduino/libraries/ESP8266TrueRandom-master",
-                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/ESP8266WiFi/src"
+                "/home/dmn/Arduino/libraries/pubsubclient-master/src",
+                "/home/dmn/Arduino/libraries/Arduino-Queue-master",
+                "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/libraries/ESP8266WiFi/src",
+                "/home/dmn/Arduino/libraries/ArduinoJson-6.x/src",
+                "/home/dmn/Arduino/libraries/Time-master"
             ],
             "forcedInclude": [
                 "/home/dmn/.arduino15/packages/esp8266/hardware/esp8266/3.1.0/cores/esp8266/Arduino.h"
