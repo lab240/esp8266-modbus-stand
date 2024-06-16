@@ -262,25 +262,10 @@ public:
 
     };
 
-    int virtual publish_sh_to_info_topic(String shStr, String _valStr)
-    {
-      if (!is_connected())
-        return 0;
-      
-      String sht=form_full_topic(INFO_CHANNEL);
-      debug("PUBLISH_SH_INFO","TOPIC="+sht);
-      _c->publish(form_full_topic(INFO_CHANNEL).c_str(), (shStr+"="+_valStr).c_str());
-      return 1;
-
-    };
-
     int virtual publish_to_info_topic(String _valStr)
     {
       if (!is_connected()) return 0;
-
-      // String sht=form_full_topic(INFO_CHANNEL);
-      // debug("PUBLISH_CLEAR_INFO","TOPIC="+sht);
-     _c->publish(form_full_topic(INFO_CHANNEL).c_str(), _valStr.c_str());
+      _c->publish(form_full_topic(INFO_CHANNEL).c_str(), _valStr.c_str());
      return 1;
     };
 
@@ -288,7 +273,7 @@ public:
     {
       debug("PUBLISH_LOG", "Publish to log topic->"+form_full_topic(LOG_CHANNEL)+", msg:"+_valStr);
       if (!is_connected()) return 0;
-      _c->publish(form_full_topic(LOG_CHANNEL).c_str(), _valStr.c_str());
+      _c->publish(form_full_topic(LOG_CHANNEL).c_str(), ("L:"+_valStr).c_str());
       return 1;
 
     };
@@ -307,20 +292,5 @@ public:
     };
 
   };
-
-
-
-/*void pubsub_callback(char* topic, byte* payload, unsigned int length) {
-    DPublisherMqtt::callback(topic, payload,length);
-    Serial.print("Message arrived [");
-    Serial.print(topic);
-    Serial.print("] ");
-    for (int i=0;i<length;i++) {
-      Serial.print((char)payload[i]);
-    }
-    Serial.println();
- }
- */
-
 
 #endif

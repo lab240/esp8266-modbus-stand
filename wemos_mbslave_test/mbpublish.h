@@ -30,7 +30,7 @@ public:
     };
 
 
-    int virtual show_parameters_loop() override {
+  int virtual show_parameters_loop() override {
 
       if(DPublisherMqtt::show_parameters_loop()){
         //debug("PUBLISH", "Mother class returns 1");
@@ -63,6 +63,13 @@ public:
       
     }
 
+    int virtual publish_custom_help() override {
+      if (!is_connected()) return 0;    
+      publish_to_info_topic("H:"+String(C_HOLDREG)+"|"+String(C_COILS)+"|"+String(C_MBADDRESS)+"|"+String(C_SERIALPORT)+"|"+String(C_SERIAL_BAUDRATE));
+      return 1;
+    };
+
+   
    //return serialized String for /out/json channel
    String virtual form_json_channel_string() override{
       StaticJsonDocument <200> root;

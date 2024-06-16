@@ -16,9 +16,18 @@ protected:
   int time_synced=0;
   ulong m_incoming_ms=0;
   uint attempts=0;
+  uint was_init=0;
 
 public:
    DBootA(WMSettings * __s): DBase(__s) {};
+  
+   void init(){
+    load();
+    debug(DSEEPROM, "Rad setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt));
+    was_init=1;
+   };
+
+   
 
     void virtual print_curr_settings(WMSettings *_s){
 /*        

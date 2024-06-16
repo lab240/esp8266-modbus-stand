@@ -7,31 +7,10 @@
 #include "mbcommands.h"
 #include "mbserial.h"
 #include "mbservice.h"
+#include "mbsettings.h"
 
 
-//default values
-#define DEFAULT_ADDRESS 126           //default modbus address
-#define DEFAULT_INT_REGS 10           //default hold regs
-#define DEFAULT_COIL_REGS 10          //default coil regs
 
-#define DEFAULT_MB_RATE 115200        // default baudrate
-#define DEFAULT_MB_FC SERIAL_8E1      // dfault  serial settings
-
-// MAX and MIN values
-#define MAX_ID 127            // max modbus address
-#define MAX_INT_REGS 255      
-#define MIN_INT_REGS 4 
-
-#define MAX_COIL_REGS 255
-#define MIN_COIL_REGS 0
-
-#define MAX_BAUDRATE 1500000
-#define MIN_BAUDRATE 1200
-
-#define MAX_SERIAL_VAR_NUM 62
-//*****************************************************
-
-#define SKIP_CHAR 'C'  //char ti skip waiting command
 
 #define MODE_SETUP 1  //tech
 
@@ -218,7 +197,7 @@ int correction_to_default_if_need(WMSettings *_s){
     if(_s->mb_intregs_amount<MIN_INT_REGS || _s->mb_intregs_amount>MAX_INT_REGS) {
       debug(DSEEPROM, "Int Regs amount is corrected to default", TOUT);
       _s->mb_intregs_amount=DEFAULT_INT_REGS;
-      return 1;
+      was_corrected=1;
     }
     if(_s->mb_coilregs_amount<MIN_COIL_REGS || _s->mb_coilregs_amount>MAX_COIL_REGS){
       debug(DSEEPROM, "COIL Regs amount is corrected to default", TOUT);

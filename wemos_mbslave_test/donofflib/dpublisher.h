@@ -57,15 +57,13 @@ public:
      };
 
 
-    //int virtual publish_sensor(String channelStr, String dataStr){};
-    
     int virtual publish_uptime()=0;
     
     int virtual publish_to_log_topic(String _valStr)=0;
 
     int virtual publish_to_topic(String _topic, String _valStr)=0;
 
-    
+    int virtual publish_to_info_topic(String _valStr) =0;
 
     int virtual is_connected()=0;
     int virtual is_time_synced()=0;
@@ -76,19 +74,19 @@ public:
     int virtual publish_sh_err(){
       if (!is_connected())
         return 0;    
-      publish_to_info_topic("E: sh param not recognized");
+      publish_to_info_topic("E:sh param not recognized");
       return 1;
     };
 
     int virtual publish_help(){
       if (!is_connected()) return 0;    
-      publish_to_info_topic("H: "+String(D_SH_HELP)+"|"+String(D_CMD_HELP));
+      publish_to_info_topic("H:"+String(D_SH_HELP)+"|"+String(D_CMD_HELP)+"|"+String(D_CUSTOM_HELP));
       return 1;
     };
 
     int virtual publish_show_help(){
       if (!is_connected()) return 0;    
-      String helpStr=String(I_TIME)+"|"+String(I_NET)+"|"+String(I_SALT)+"|"+String(I_IS_SYNCED)+"|"+String(C_TIME_ZONE);
+      String helpStr=String(I_TIME)+"|"+String(I_NET)+"|"+String(I_SALT)+"|"+String(I_IS_SYNCED)+"|"+String(C_TIME_ZONE)+"|"+String("clevelX")+"|"+String("cnotifyX");
       publish_to_info_topic("H:"+helpStr);
       return 1;
     };
@@ -97,6 +95,12 @@ public:
       if (!is_connected()) return 0;    
       String helpStr=String(D_RESET)+"|"+String(D_CLEAR)+"|"+String(D_SAVE);
       publish_to_info_topic("H:"+helpStr);
+      return 1;
+    };
+
+    int virtual publish_custom_help(){
+      if (!is_connected()) return 0;    
+      publish_to_info_topic("H:No help here");
       return 1;
     };
 
@@ -119,7 +123,7 @@ public:
         cmdStr = _incomingStr.substring(0, index_val);
         valStr = _incomingStr.substring(index_val + 1, _incomingStr.length());
 
-        if(!set_parameters_loop()) publish_to_info_topic("E:Varable error");
+        if(!set_parameters_loop()) publish_err_to_info_topic("Varable error");
 
         //debug("RECOGNIZE", "command=" + cmdStr + "; value=" + valStr);
         if(autosave) que_wanted->push(PUBLISHER_WANT_SAVE);
@@ -132,14 +136,14 @@ public:
         int space_index=shStr.indexOf(' ');
         if(space_index!=-1){
           shStr=shStr.substring(0,space_index);
-          debug("PUBLISH", "New shStr="+shStr);
+          //debug("PUBLISH", "New shStr="+shStr);
         }
 
         if(show_parameters_loop()==0) publish_sh_err();
         //debug("RECOGNIZE", "sh val=" + shStr);
         
       }else {
-        if(!cmd_loop(_incomingStr)) publish_to_info_topic ("no command");
+        if(!cmd_loop(_incomingStr)) publish_err_to_info_topic ("no command");
       }
     };
 
@@ -156,6 +160,11 @@ public:
             return 1;
         }
 
+        if (inS==D_HELP) return publish_help();
+        if (inS==D_SH_HELP) return publish_show_help();
+        if (inS==D_CMD_HELP) return publish_cmd_help();
+        if (inS==D_CUSTOM_HELP) return publish_custom_help();
+   
         return 0;
             
     };
@@ -164,7 +173,7 @@ public:
     int virtual show_parameters_loop() {
 
       if (is_sh_present == 0) {
-        debug("SHOWPARAMSLOOP", "no sh recognized");
+        debug("SHOWPARAMSLOOP", "E: NO sh recognized");
         return 0;
       }
 
@@ -210,23 +219,28 @@ public:
         String ssid = WiFi.SSID();
         String ipstring = WiFi.localIP().toString();
         //Serial.println("rssdb="+String(rssdb)+", SSID="+String(ssid)+" ,ip="+ipstring);
-        String outS = "{SSID:" + ssid + ",rss=" + String(rssdb) + ",ip=" + String(ipstring);
-        publish_to_info_topic(outS);
+        String outS = "SSID=" + ssid + ";RSS=" + String(rssdb) + ";IP=" + String(ipstring);
+        publish_val_to_info_topic(outS);
         return 1;
       }
 
       if (shStr == I_IP) {
-        publish_to_info_topic( WiFi.localIP().toString());
+        publish_val_to_info_topic("IP="+WiFi.localIP().toString());
         return 1;
       }
 
       if (shStr == I_TIME) {
-         publish_to_info_topic("I:S="+String(is_time_synced())+",T="+String(hour())+":"+String(minute())+":"+String(year()));
+         publish_val_to_info_topic("S="+String(is_time_synced())+";T="+String(hour())+":"+String(minute())+":"+String(year()));
          return 1;
       }
 
       if (shStr == I_SALT) {
-         publish_sh_to_info_topic( shStr, String(_s->salt));
+         publish_val_to_info_topic("SALT="+String(_s->salt));
+         return 1;
+      }
+
+       if (shStr == I_IS_SYNCED) {
+         publish_val_to_info_topic("IS_SYNCED="+String(is_time_synced()));
          return 1;
       }
       
@@ -370,13 +384,20 @@ public:
 
     };
 
-    int virtual publish_sh_to_info_topic(String shStr, String _valStr) =0;
+    int virtual publish_sh_to_info_topic(String shStr, String _valStr){
+      return publish_to_info_topic("V:"+shStr+"="+_valStr);
+    };
 
-    int virtual publish_to_info_topic(String _valStr) =0;
+    int virtual publish_val_to_info_topic(String shStr){
+      return publish_to_info_topic("V:"+shStr);
+    };
+  
+    int virtual publish_err_to_info_topic(String shStr){
+      return publish_to_info_topic("E:"+shStr);
+    };
 
-    void virtual clear_info_channel(){
-      publish_to_info_topic("                          ");
-      
+    int virtual clear_info_channel(){
+      return publish_to_info_topic("                          ");
     };
 
 };
