@@ -340,7 +340,7 @@ public:
     publish_to_topic(JSON_CHANNEL, form_json_channel_string());
    }
 
-   
+   /*
     int set_settings_val_bool(String _command, String _valStr, bool* _setting_val) {
       bool recognize = 0;
       if (_valStr.startsWith("0") && _valStr.length() == 1) {
@@ -383,7 +383,8 @@ public:
       return 0;
 
     };
-
+    */
+   
     int virtual publish_sh_to_info_topic(String shStr, String _valStr){
       return publish_to_info_topic("V:"+shStr+"="+_valStr);
     };

@@ -11,6 +11,7 @@
 #include "donofflib/dpublishmqtt.h"
 #include "donofflib/ddevice.h"
 #include "mbpublish.h"
+#include "dboot/dbootmodbus.h"
 
 #define DEBUG 1
 #define WIFI_ENABLE 1
@@ -59,6 +60,7 @@ WifiCreds wificreds;
 //WMSettings settings;
 
 WMSettings * _s;
+DBootModbus dboot(_s);
 
 WiFiClient espClient;
 PubSubClient client(espClient);

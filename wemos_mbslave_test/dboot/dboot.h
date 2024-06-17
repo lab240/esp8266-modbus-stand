@@ -1,5 +1,5 @@
-#ifndef __mbpublish1__
-#define __mbpublish1__
+#ifndef __dboot__
+#define __dboot__
 
 
 #include "../donofflib/dbase.h"
@@ -21,46 +21,25 @@ protected:
 public:
    DBootA(WMSettings * __s): DBase(__s) {};
   
-   void init(){
-    load();
-    debug(DSEEPROM, "Rad setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt));
-    was_init=1;
-   };
+    void init(){
+        load();
+        debug(DSEEPROM, "Rad setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt));
+        was_init=1;
+    };
 
-   
+    void virtual print_curr_settings()=0;
+    int virtual do_set_command(String cmdStr, String valStr)=0;
 
-    void virtual print_curr_settings(WMSettings *_s){
-/*        
-        debug(DSHELP, "custom_level1->"+String(_s->custom_level1), TOUT);
-        debug(DSHELP, "custom_Level2->"+String(_s->custom_level2), TOUT);
-        debug(DSHELP, "custom_level3->"+String(_s->custom_level3), TOUT);
-        debug(DSHELP, "customlevel4->"+String(_s->custom_level4), TOUT);
-        debug(DSHELP, "custom_level_notify1->"+String(_s->custom_level_notify1), TOUT);
- */
-        debug(DSCOMMAND,"WIFI CREDS(ssid|pass)->" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)); 
-        debug(DSHELP, "MQTT SERVER->"+String(_s->mqttServer));
-        debug(DSHELP, "MQTT USER->"+String(_s->mqttUser));
-        debug(DSHELP, "MQTT PASS->"+String(_s->mqttPass));
-
-        }
-
-    void print_welcome_help(){
-        debug(DSHELP, "-------------- Avaliable commands (wait for "+String(NUM_TRY)+" secs) -----------------");
-        debug(DSHELP, "Press <C+Enter> to skip Dboot"
-        debug(DSHELP, "help - get full help");
-
-        debug(DSHELP, "MQTT SERVER->"+String(_s->mqttServer));
-        debug(DSHELP, "MQTT USER->"+String(_s->mqttUser));
-        debug(DSHELP, "MQTT PASS->"+String(_s->mqttPass));
-    }
-
-    void print_full_help(){
+    void virtual print_welcome_help(){
         debug(DSHELP, "-------------- Avaliable commands (wait for "+String(NUM_TRY)+" secs) -----------------");
         debug(DSHELP, "Press <C+Enter> to skip Dboot");
-        debug(DSHELP, String(CMD_SSID) + "=<SSID|PASSWORD> wifi creds");
-        debug(DSHELP, String(CMD_MQTT_SERVER) + "=<mqtt_serer>, "+ String(CMD_MQTT_USER)+"=<mqtt_user>, "+String(CMD_MQTT_PASS)+"=<mqtt_pass>, "+String(CMD_MQTT_PORT)+"=<mqtt_port>");
-        }
+        debug(DSHELP, "help - get full help");
+    };
 
+    void virtual print_full_help(){
+        debug(DSHELP, "-------------- Avaliable commands (wait for "+String(NUM_TRY)+" secs) -----------------");
+        debug(DSHELP, "Press <C+Enter> to skip Dboot");
+    };
 
     //get command from terminal
     String read_command_from_serial_str(){
@@ -95,7 +74,7 @@ public:
     };
 
 
-    int do_espboot_loop(){
+    int do_boot_loop(){
         String inCommandStr=""; 
         bool stop_commnads=0;
 
@@ -119,11 +98,11 @@ public:
                 //commands 
                 debug(DSCOMMAND,"command >" +String(inCommandStr) +"< incoming");
                 if(inCommandStr.startsWith(CMD_CMD_HELP)){
-                print_full_help();
+                    print_full_help();
                 }
 
                 if(inCommandStr.startsWith(CMD_CMD_PRINT)){
-                print_curr_settings(_s);
+                    print_curr_settings();
                 }
             
             //<parameter>=<value>
@@ -132,7 +111,7 @@ public:
                 String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
                 String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
                 debug(DSCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
-                if(!do_set_command(_s, cmdStr, numStr)) {
+                if(!do_set_command(cmdStr, numStr)) {
                 debug(DSCOMMAND,"Wrong set parameter or value->"+cmdStr);
                 }
             
@@ -149,56 +128,7 @@ public:
         }
         if(stop_commnads) return 1; else return 0;
     };
-
-
-    int do_set_command(WMSettings *_s, String cmdStr, String valStr){
-      
-        if (cmdStr == CMD_SSID){
-            debug(DSCOMMAND, "Wifi Creds, push ssid="+valStr);
-            
-            if(valStr.indexOf('|')!=-1){  
-                String ssidStr=  valStr.substring(0,valStr.indexOf('|'));
-                String passStr = valStr.substring(valStr.indexOf('|')+1,valStr.length());
-                debug(DSCOMMAND, "Command->"+ ssidStr+", Value->"+passStr);
-                debug(DSCOMMAND, "Writing creds...");
-
-                //wifi begin without connect
-                WiFi.begin(ssidStr.c_str(), passStr.c_str(), 0, NULL, false);
-                struct station_config stationConf;
-                 
-                //trick to save wifi creds to EEPROM
-                wifi_station_get_config(&stationConf);
-                debug(DSCOMMAND,"new saved ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|"); 
-                wifi_station_set_config(&stationConf);
-            
-                return 1;
-            }
-            debug(DSCOMMAND,"Can't find `|` symbol in wifi|pass format");
-            return 0;
-        }
-
-        if(cmdStr==CMD_MQTT_USER){
-            if (set_settings_val_str(_s,cmdStr,valStr,_s->mqttUser,12))return 1;
-        }
-
-        if(cmdStr==CMD_MQTT_PASS){
-            if (set_settings_val_str(_s,cmdStr,valStr,_s->mqttPass,22))return 1;
-        }
-
-        if(cmdStr==CMD_MQTT_SERVER){
-            if (set_settings_val_str(_s,cmdStr,valStr,_s->mqttServer,22))return 1;
-        }
-
-        if(cmdStr==CMD_MQTT_DEV){
-            if (set_settings_val_str(_s,cmdStr,valStr,_s->dev_id,10))return 1;
-        }
-
-        return 0;  
-    }; 
-
 };
-
-
 
 #endif
 

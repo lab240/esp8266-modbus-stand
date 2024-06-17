@@ -2,28 +2,30 @@
 #define __dbootmodbus__
 
 
-#include "dboot.h"
+#include "dbootwithwifi.h"
 
 
-class DBootModbus : public DBootA
+class DBootModbus : public DBootWithWifi
 {
 protected:
- 
+ SerialConfig serial_settings;
 
 public:
-   DBootModbus(WMSettings * __s): DBootA(__s) {};
+   DBootModbus(WMSettings * __s): DBootWithWifi(__s) {
+    serial_settings=DEFAULT_MB_FC;
+   };
 
 
    void init(){
-    DBootA::init();
+    DBootWithWifi::init();
     set_defaults_if_need();
     correction_to_default_if_need();
    };
 
 
-    void virtual print_curr_settings(WMSettings *_s){
-        DBootA::print_curr_settings();
-        
+    void virtual print_curr_settings() override {
+        DBootWithWifi::print_curr_settings();
+ 
         debug(DSHELP, "Mdbus address->"+String(_s->custom_level1), TOUT);
         debug(DSHELP, "HOLD REGS->"+String(_s->custom_level2), TOUT);
         debug(DSHELP, "COIL REGS->"+String(_s->custom_level3), TOUT);
@@ -31,16 +33,15 @@ public:
         debug(DSHELP, "PORT SERIAL NUM->"+String(_s->custom_level_notify1), TOUT);
         debug(DSHELP, "PORT SETTINGS->"+get_serial_settings_string(_s->custom_level_notify1));
 
+    }
+
+    void virtual print_welcome_help() override{
+        DBootWithWifi::print_welcome_help();
 
     }
 
-    void print_welcome_help(){
-        DBootA::print_welcome_help();
-
-    }
-
-    void print_full_help(){
-        DBootA::print_full_help();
+    void virtual print_full_help() override {
+        DBootWithWifi::print_full_help();
 
         debug(DSHELP, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), ");
         debug(DSHELP, String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>");
@@ -106,30 +107,30 @@ public:
     };
 
 */
-    int do_set_command(WMSettings *_s, String cmdStr, String valStr){
+    int do_set_command(String cmdStr, String valStr){
         
-        if(DBootA::do_set_command(_s,cmdStr,valStr)) return 1;
+        if(DBootWithWifi::do_set_command(cmdStr,valStr)) return 1;
 
         if (cmdStr == CMD_SET_ADDRESS)
-             if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->mb_modbus_address, 0,MAX_ID)) return 1;
+             if (set_settings_val_int(cmdStr,valStr,(int*) &_s->mb_modbus_address, 0,MAX_ID)) return 1;
   
         if (cmdStr == CMD_SET_INT_REGS_AMOUNT)
-            if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->mb_intregs_amount, 4,MAX_INT_REGS)) return 1;
+            if (set_settings_val_int(cmdStr,valStr,(int*) &_s->mb_intregs_amount, 4,MAX_INT_REGS)) return 1;
         
         if (cmdStr == CMD_SET_COIL_REGS_AMOUNT)
-            if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->mb_coilregs_amount, 0,MAX_COIL_REGS)) return 1;
+            if (set_settings_val_int(cmdStr,valStr,(int*) &_s->mb_coilregs_amount, 0,MAX_COIL_REGS)) return 1;
         
         if (cmdStr == CMD_SET_BAUDRATE)
-            if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->mb_serial_baudrate, MIN_BAUDRATE, MAX_BAUDRATE )) return 1;
+            if (set_settings_val_int(cmdStr,valStr,(int*) &_s->mb_serial_baudrate, MIN_BAUDRATE, MAX_BAUDRATE )) return 1;
         
         if (cmdStr == CMD_SET_PORT_SETTINGS)
-            if (set_settings_val_int(_s,cmdStr,valStr,(int*) &_s->mb_serial_settings_num, 1, MAX_SERIAL_VAR_NUM)) return 1;
+            if (set_settings_val_int(cmdStr,valStr,(int*) &_s->mb_serial_settings_num, 1, MAX_SERIAL_VAR_NUM)) return 1;
 
         return 0;  
     }; 
 
     int set_defaults_if_need(){
-        if (_s->salt != EEPROM_SALT) {
+        if (_s->salt == EEPROM_SALT) return 0;
         debug(DSEEPROM, "Invalid settings in EEPROM, trying with defaults",TERROR);
         WMSettings defaults;
         *_s = defaults;
@@ -141,7 +142,8 @@ public:
         _s->mb_serial_settings_num=NSERIAL_8E1; //SERIAL_8E1
 
         debug(DSEEPROM, "DEFAULTS: Salt="+String(_s->salt), TOUT);
-        print_curr_settings(_s);
+        print_curr_settings();
+        return 1;
     };
 
     int virtual correction_to_default_if_need(){
@@ -171,7 +173,7 @@ public:
         _s->mb_serial_settings_num=NSERIAL_8E1;
         was_corrected=1;
         }
-        if(was_corrected)return 1;
+        if(was_corrected) return 1;
         return 0;
 };
 
