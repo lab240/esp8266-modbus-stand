@@ -23,6 +23,7 @@ class DBase {
 
   public:
     int debug_level = 1;
+
     DBase(WMSettings * __s) {
       _s = __s;
     };
@@ -91,7 +92,7 @@ class DBase {
     };
 
 void virtual save(){
-     debug("SAVE", "Lets' save");
+     debug("SAVE", "Lets' save EEPROM");
      EEPROM.begin(D_MEM_SIZE);
      EEPROM.put(0, *_s);
      EEPROM.commit();

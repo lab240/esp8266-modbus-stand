@@ -2,29 +2,29 @@
 #define __dbootmodbus__
 
 
-#include "dbootwithwifi.h"
+#include "dbootespmqtt.h"
 
 
-class DBootModbus : public DBootWithWifi
+class DBootEspMqttModbus : public DBootEspMqtt
 {
 protected:
  SerialConfig serial_settings;
 
 public:
-   DBootModbus(WMSettings * __s): DBootWithWifi(__s) {
+    DBootEspMqttModbus(WMSettings * __s): DBootEspMqtt(__s) {
     serial_settings=DEFAULT_MB_FC;
    };
 
 
-   void init(){
-    DBootWithWifi::init();
-    set_defaults_if_need();
-    correction_to_default_if_need();
+   void virtual init() override{
+        DBootEspMqtt::init();
+        set_defaults_if_need();
+        correction_to_default_if_need();
    };
 
 
-    void virtual print_curr_settings() override {
-        DBootWithWifi::print_curr_settings();
+   void virtual print_curr_settings() override {
+        DBootEspMqtt::print_curr_settings();
  
         debug(DSHELP, "Mdbus address->"+String(_s->custom_level1), TOUT);
         debug(DSHELP, "HOLD REGS->"+String(_s->custom_level2), TOUT);
@@ -35,13 +35,14 @@ public:
 
     }
 
+/*
     void virtual print_welcome_help() override{
         DBootWithWifi::print_welcome_help();
 
     }
-
+*/
     void virtual print_full_help() override {
-        DBootWithWifi::print_full_help();
+        DBootEspMqtt::print_full_help();
 
         debug(DSHELP, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), ");
         debug(DSHELP, String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>");
@@ -109,7 +110,7 @@ public:
 */
     int do_set_command(String cmdStr, String valStr){
         
-        if(DBootWithWifi::do_set_command(cmdStr,valStr)) return 1;
+        if(DBootEspMqtt::do_set_command(cmdStr,valStr)) return 1;
 
         if (cmdStr == CMD_SET_ADDRESS)
              if (set_settings_val_int(cmdStr,valStr,(int*) &_s->mb_modbus_address, 0,MAX_ID)) return 1;
@@ -129,7 +130,7 @@ public:
         return 0;  
     }; 
 
-    int set_defaults_if_need(){
+    int virtual set_defaults_if_need() override {
         if (_s->salt == EEPROM_SALT) return 0;
         debug(DSEEPROM, "Invalid settings in EEPROM, trying with defaults",TERROR);
         WMSettings defaults;

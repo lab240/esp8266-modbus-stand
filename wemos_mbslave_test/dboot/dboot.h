@@ -4,6 +4,7 @@
 
 #include "../donofflib/dbase.h"
 
+#define NUM_TRYES 10   //waiting command pause
 
 class DBootA : public DBase
 {
@@ -18,17 +19,26 @@ protected:
   uint attempts=0;
   uint was_init=0;
 
+  //number of seconds when we are waitng the command
+  uint num_tryes=NUM_TRYES;
+
 public:
-   DBootA(WMSettings * __s): DBase(__s) {};
+   DBootA(WMSettings * __s): DBase(__s) {
+   };
   
-    void init(){
+    void virtual init(){
+        debug(DSEEPROM,"Loading EEPROM...");
         load();
-        debug(DSEEPROM, "Rad setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt));
+        debug(DSEEPROM, "Read setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt));
         was_init=1;
     };
 
-    void virtual print_curr_settings()=0;
+
     int virtual do_set_command(String cmdStr, String valStr)=0;
+
+    void virtual print_curr_settings(){
+        debug(DSHELP, "-------------- Current Settings -----------------");
+    };
 
     void virtual print_welcome_help(){
         debug(DSHELP, "-------------- Avaliable commands (wait for "+String(NUM_TRY)+" secs) -----------------");
@@ -47,21 +57,21 @@ public:
         //int is_cmd_l=0;
         int count_try=0;
         uint32_t softTimer = 0; 
-        char inCommandChr[50] = {0};    // заводим массив для захвата команды задания адреса
-        uint8_t counterByte = 0;      // указатель для записи команды в массив
+        char inCommandChr[50] = {0};    // incomming array of chars
+        uint8_t counterByte = 0;      //  byte pointer
 
-        while(is_cmd==0 && count_try<NUM_TRY){  // цикл таймаута для задания адреса
+        while(is_cmd==0 && count_try < num_tryes){  // waiting command loop
 
             Serial.print(count_try,DEC);
             Serial.print("...\t");  // печатаем секунды таймаута
 
-            softTimer = millis() + 1000;                  // назначаем таймер на 1с
+            softTimer = millis() + 1000;                  // set timer 1sec
 
             int incoming_flg=0;
-            while(softTimer > (millis())){                // крутимся в цикле пока время меньше заданного таймаута
-            if (Serial.available() > 0) {               // если доступны данные из порта
-                inCommandChr[counterByte]=Serial.read();      // принимаем в массив по указателю
-                if(counterByte < 520) counterByte++;          // но не более 20 значений от 0 
+            while(softTimer > (millis())){                
+            if (Serial.available() > 0) {                 // if data avalaible
+                inCommandChr[counterByte]=Serial.read();      // read bytes from serial
+                if(counterByte < 520) counterByte++;          
                 else counterByte = 0;
                 incoming_flg=1;                      // иначе сбрасываем счетчик
             }
@@ -128,6 +138,8 @@ public:
         }
         if(stop_commnads) return 1; else return 0;
     };
+
+
 };
 
 #endif

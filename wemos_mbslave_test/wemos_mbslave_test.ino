@@ -60,7 +60,7 @@ WifiCreds wificreds;
 //WMSettings settings;
 
 WMSettings * _s;
-DBootModbus dboot(_s);
+DBootEspMqttModbus * _dboot;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -92,7 +92,11 @@ void setup() {
   Serial.begin(115200, SERIAL_8N1);  
   delay(1000);
 
-  Serial.println("************ Starting ********************");
+  Serial.println("************ Starting MQTT ********************");
+
+  delay(1000);
+  
+  //init espboot
 
   if(MQTT_ENABLE){
 
@@ -112,19 +116,23 @@ void setup() {
 
   }
 
+  Serial.println("************ Starting DBOOT ********************");
+  
+  _dboot=new DBootEspMqttModbus(_s);
+
+  // Serial.println("************ Starting DBOOT\INIT ********************");
+  _dboot->init();
+  _dboot->print_curr_settings();
+
+  // dboot.print_curr_settings();
+
   led_mode_setup =1;
 
   pinMode(LED_DATA, OUTPUT);
   
   ticker.attach(0.25,tickf);
-
-  Serial.begin(115200, SERIAL_8N1);  
-  delay(1000);
-
-  eload(_s);
-
-   debug(DSEEPROM, "Setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt),  TOUT);
-   print_curr_settings(_s);
+ 
+ /*
 
   debug(DSEEPROM, "Salt="+String(_s->salt)+"; Address="+String(_s->mb_modbus_address)+"; RegsI="+String(_s->mb_intregs_amount)+"; RegsC="+String(_s->mb_coilregs_amount));
   //debug(DEEPROM, "Salt="+String(_s->salt)+"; Address="+String(_s->custom_level1)+"; RegsI="+String(_s->custom_level2)+"; RegsC="+String(_s->custom_level3));
@@ -154,24 +162,27 @@ void setup() {
     }
   }
 
+  */
+
   if(WIFI_ENABLE){
     debug(DSMAIN, "Init wifi settings");
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
   }
- 
+  
+  debug(DSMAIN, "-------------- Welcome  ------------------------------------------------------------------------");
 
   // инициализируем уарт с параметрами стандартного монитора порта
 
   debug(DSENTER,0);
-  print_welcome_help();
+  _dboot->print_welcome_help();
  
   debug(DSMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
   debug(DSENTER,0);
  
-  //loop of setup progs
-  do_espboot_loop(_s);  
+  //loop of setup boot
+  _dboot->do_boot_loop();
 
   debug(DSENTER,0); // \n
 

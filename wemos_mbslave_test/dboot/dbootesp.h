@@ -1,5 +1,5 @@
-#ifndef __dbootwithwifi__
-#define __dbootwithwifi__
+#ifndef __dbootesp__
+#define __dbootesp__
 
 
 #include "dboot.h"
@@ -7,44 +7,41 @@
 
 
 
-class DBootWithWifi : public DBootA
+class DBootEsp : public DBootA
 {
 protected:
 
 public:
-   DBootWithWifi(WMSettings * __s): DBootA(__s) {};
+   DBootEsp(WMSettings * __s): DBootA(__s) {};
   
-   void init(){
+   void virtual init() override{
     DBootA::init();
-    was_init=1;
+    set_defaults_if_need();
    };
 
-   
+   int virtual set_defaults_if_need()=0; //change it if SALT is wrong and you need set default values
 
-    void virtual print_curr_settings() override {
+
+   void virtual print_curr_settings() override {
+
+        DBootA::print_curr_settings();
+    
         struct station_config stationConf;
         wifi_station_get_config (&stationConf);
-        debug(DSCOMMAND,"WIFI CREDS(ssid|pass)->" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)); 
-        debug(DSHELP, "MQTT SERVER->"+String(_s->mqttServer));
-        debug(DSHELP, "MQTT USER->"+String(_s->mqttUser));
-        debug(DSHELP, "MQTT PASS->"+String(_s->mqttPass));
-
-    }
+        debug(DSHELP, "WIFI CREDS(ssid|pass)->" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)); 
+   
+    };
 
     void virtual print_welcome_help() override{
-        DBootWithWifi::print_welcome_help();
+        DBootA::print_welcome_help();
 
-        debug(DSHELP, "MQTT SERVER->"+String(_s->mqttServer));
-        debug(DSHELP, "MQTT USER->"+String(_s->mqttUser));
-        debug(DSHELP, "MQTT PASS->"+String(_s->mqttPass));
-    }
+    };
 
     void virtual print_full_help() override{
-        DBootWithWifi::print_full_help();
+        DBootA::print_full_help();
 
         debug(DSHELP, String(CMD_SSID) + "=<SSID|PASSWORD> wifi creds");
-        debug(DSHELP, String(CMD_MQTT_SERVER) + "=<mqtt_serer>, "+ String(CMD_MQTT_USER)+"=<mqtt_user>, "+String(CMD_MQTT_PASS)+"=<mqtt_pass>, "+String(CMD_MQTT_PORT)+"=<mqtt_port>");
-    }
+    };
 
     
    int virtual do_set_command(String cmdStr, String valStr) override {
@@ -71,22 +68,6 @@ public:
             }
             debug(DSCOMMAND,"Can't find `|` symbol in wifi|pass format");
             return 0;
-        }
-
-        if(cmdStr==CMD_MQTT_USER){
-            if (set_settings_val_str(cmdStr,valStr,_s->mqttUser,12))return 1;
-        }
-
-        if(cmdStr==CMD_MQTT_PASS){
-            if (set_settings_val_str(cmdStr,valStr,_s->mqttPass,22))return 1;
-        }
-
-        if(cmdStr==CMD_MQTT_SERVER){
-            if (set_settings_val_str(cmdStr,valStr,_s->mqttServer,22))return 1;
-        }
-
-        if(cmdStr==CMD_MQTT_DEV){
-            if (set_settings_val_str(cmdStr,valStr,_s->dev_id,10))return 1;
         }
 
         return 0;  
