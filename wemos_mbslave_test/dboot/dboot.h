@@ -4,7 +4,7 @@
 
 #include "../donofflib/dbase.h"
 
-#define NUM_TRYES 10   //waiting command pause
+#define DEFAULT_NUM_TRYES 10   //waiting command pause
 
 class DBootA : public DBase
 {
@@ -20,7 +20,7 @@ protected:
   uint was_init=0;
 
   //number of seconds when we are waitng the command
-  uint num_tryes=NUM_TRYES;
+  uint num_tryes=DEFAULT_NUM_TRYES;
 
 public:
    DBootA(WMSettings * __s): DBase(__s) {
@@ -41,13 +41,13 @@ public:
     };
 
     void virtual print_welcome_help(){
-        debug(DSHELP, "-------------- Avaliable commands (wait for "+String(NUM_TRY)+" secs) -----------------");
+        debug(DSHELP, "-------------- Avaliable commands (wait for "+String(num_tryes)+" secs) -----------------");
         debug(DSHELP, "Press <C+Enter> to skip Dboot");
         debug(DSHELP, "help - get full help");
     };
 
     void virtual print_full_help(){
-        debug(DSHELP, "-------------- Avaliable commands (wait for "+String(NUM_TRY)+" secs) -----------------");
+        debug(DSHELP, "-------------- Avaliable commands (wait for "+String(num_tryes)+" secs) -----------------");
         debug(DSHELP, "Press <C+Enter> to skip Dboot");
     };
 
@@ -63,6 +63,8 @@ public:
         while(is_cmd==0 && count_try < num_tryes){  // waiting command loop
 
             Serial.print(count_try,DEC);
+            Serial.print("/");
+            Serial.print(num_tryes);
             Serial.print("...\t");  // печатаем секунды таймаута
 
             softTimer = millis() + 1000;                  // set timer 1sec
@@ -83,63 +85,76 @@ public:
         return String(inCommandChr);
     };
 
-
-    int do_boot_loop(){
-        String inCommandStr=""; 
-        bool stop_commnads=0;
-
-        while (!stop_commnads){
-
-            inCommandStr=get_command_str();
-            
-            debug(DSENTER,0);
-            
-            if(inCommandStr!=""){
-            debug(DSCOMMAND, "Received incoming string->"+String(inCommandStr));
-            
-            //skip loop command
-            if( inCommandStr.length()<=3 && inCommandStr.charAt(0)==SKIP_CHAR) {
-                debug(DSCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Skip waiting command", TOUT);
-                stop_commnads=1;
-                return 0;
-            }
-
-            if(inCommandStr.length()>3 && inCommandStr.indexOf('=')==-1){
-                //commands 
-                debug(DSCOMMAND,"command >" +String(inCommandStr) +"< incoming");
-                if(inCommandStr.startsWith(CMD_CMD_HELP)){
-                    print_full_help();
-                }
-
-                if(inCommandStr.startsWith(CMD_CMD_PRINT)){
-                    print_curr_settings();
-                }
-            
-            //<parameter>=<value>
-            }else if(inCommandStr.indexOf('=')!=-1){  
-
-                String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
-                String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
-                debug(DSCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
-                if(!do_set_command(cmdStr, numStr)) {
-                debug(DSCOMMAND,"Wrong set parameter or value->"+cmdStr);
-                }
-            
-            }else{
-                debug(DSCOMMAND, "Commnad is not recognized", TOUT);
-            }
-            
-            }else{
-                debug(DSCOMMAND, "No incomming string");
-                stop_commnads=1;
-                return 0;
-            }
-
+    int virtual do_run_command(String inStr){
+        if(inStr.startsWith(CMD_CMD_HELP)){
+            print_full_help();
+            return 1;
         }
-        if(stop_commnads) return 1; else return 0;
+
+        if(inStr.startsWith(CMD_CMD_PRINT)){
+            print_curr_settings();
+            return 1;
+        }
+
+        return 0;
+
     };
 
 
+    int do_boot_loop(){
+
+        String inCommandStr=""; 
+        bool stop_command=0;
+
+        while (!stop_command){
+
+            inCommandStr=read_command_from_serial_str();
+            debug(DSCOMMAND, "INCSTRING="+inCommandStr);
+            
+            if(inCommandStr!=""){
+                debug(DSCOMMAND, "Received incoming string->"+String(inCommandStr));
+            
+                 //skip loop command
+                if( inCommandStr.length()<3 && inCommandStr.charAt(0)==SKIP_CHAR) {
+                    debug(DSCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Skip waiting command", TOUT);
+                    stop_command=1;
+                    return 0;
+                }
+
+            //<parameter>=<value> string
+                if(inCommandStr.indexOf('=')!=-1){  
+                    String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
+                    String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
+                    debug(DSCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
+                    if(!do_set_command(cmdStr, numStr)) {
+                        //wrong varable or value
+                        debug(DSCOMMAND,"Wrong set parameter or value->"+cmdStr);
+                    }
+                
+                //command string, lets do something and continue
+                 }else if(inCommandStr.length()>=3){
+                    debug(DSCOMMAND,"command->" +String(inCommandStr));
+                    if(!do_run_command(inCommandStr)){              
+                        debug(DSCOMMAND, "Commnad is not recognized", TOUT);
+                    }
+                //no incoming string, finish loop
+                // }else{
+                //    debug(DSCOMMAND, "Can not recognize string");
+                // }    
+               
+                }else{
+                     debug(DSCOMMAND, "Something strange in incomig string", TOUT);
+                }
+                      
+
+            }else{
+                //no incoming str, finish listen incoming
+                debug(DSCOMMAND, "Finish boot loop, bye bye bye bye", TOUT);
+                stop_command=1; 
+            }           
+        }
+        if(stop_command) return 1; else return 0;
+    };
 };
 
 #endif
