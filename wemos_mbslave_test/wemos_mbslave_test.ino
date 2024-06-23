@@ -186,8 +186,12 @@ void setup() {
 
   debug(DSENTER,0); // \n
 
-  debug(DSMAIN, "------ Start modbus emulation ------");
-  print_curr_settings(_s);
+  debug(DSMAIN, "------ Start modbus emulation with parameters ------");
+  // print_curr_settings(_s);
+
+  _dboot->print_curr_settings();
+
+  delete(_dboot);
 
   if(WIFI_ENABLE){
     ticker.attach(0.15,tickf);

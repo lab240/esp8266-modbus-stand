@@ -19,47 +19,67 @@ class DBase {
     WMSettings * _s;
     
     //enable print out on default (if Serial is used for data tranfer, disable it by desable_print_debug())
-    int print_debug=1; 
+    int silent_mode=0; 
 
   public:
     int debug_level = 1;
+  
 
     DBase(WMSettings * __s) {
       _s = __s;
     };
 
-  void disable_print_debug(){print_debug=0;};
+  void enable_silent(){silent_mode=1;};
 
-  void enable_print_debug(){print_debug=1;};
+  void disable_silent(){silent_mode=0;};
 
+  uint is_silent(){return silent_mode;};
 
   template <typename T>
-  void debug(String sourceStr, T debug,  int type=0, String preStr="") {
-    if(!print_debug) return; //if print_debug==0 disable any out printting !
+  void debug(String sourceStr, T debug,  int type=4, String preStr="", int strong_out_message=1) {
+    //if silent mode, exit
+    if(is_silent()) return;
+    //if DSENTER, only print \n
+    if(debug_level>0 && sourceStr==DSENTER){
+      Serial.println("\n");
+      return;
+    }
 
+    int let_out=0;
+    
     if (debug_level > 0){
        switch(type){
         case 0:
-          Serial.print("<UDEF>");
+          if(debug_level>3) Serial.print("TRACE");
           break;
         case 1:
-          Serial.print("<ERROR>");
+          if(debug_level>1) Serial.print("<!ERROR!>");
+          let_out=1;
           break;
         case 2:
-          Serial.print("<WARNING>");
+           if(debug_level==1 || debug_level==2) Serial.print("<WARNING>");
+           let_out=1;
           break;
         case 3: 
-          Serial.print("<INFO>");
+           if(debug_level >2) Serial.print("<INFO>");
+           let_out=1;
           break;
-      }
-      Serial.print("DEBUG:");
-      Serial.print(sourceStr); 
-      Serial.print(":");
-      if(preStr!="") Serial.print(preStr+"->");
-      Serial.print(debug);
-     
-      Serial.println();
-          
+        case 4: 
+          if(debug_level>3) Serial.print("<UNDEF>");
+          let_out=1;
+          break;
+       }
+       if(debug_level==0 && strong_out_message){
+         Serial.print("<OUT>");
+       }
+       if(let_out || strong_out_message){
+     //type!=4 ? Serial.print("DEBUG:") : Serial.print("OUTPUT:");
+          Serial.print(sourceStr); 
+          Serial.print(":");
+          if(preStr!="") Serial.print(preStr+"->");
+          Serial.print(debug);
+          Serial.println();
+        }
     }
   };
 

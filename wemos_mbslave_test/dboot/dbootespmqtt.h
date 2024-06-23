@@ -25,24 +25,23 @@ public:
 
         DBootEsp::print_curr_settings();
     
-        debug(DSHELP, "MQTT SERVER->"+String(_s->mqttServer));
-        debug(DSHELP, "MQTT USER->"+String(_s->mqttUser));
-        debug(DSHELP, "MQTT PASS->"+String(_s->mqttPass));
+        debug(DSHELP, "MQTT SERVER->"+String(_s->mqttServer)+"; MQTT USER->"+String(_s->mqttUser)+"; MQTT PASS->"+String(_s->mqttPass));
+        debug(DSHELP, "MQTT DEV->"+String(_s->dev_id));
     
     };
 
     void virtual print_welcome_help() override{
         DBootEsp::print_welcome_help();
-
-        debug(DSHELP, "MQTT SERVER->"+String(_s->mqttServer));
-        debug(DSHELP, "MQTT USER->"+String(_s->mqttUser));
-        debug(DSHELP, "MQTT PASS->"+String(_s->mqttPass));
+        debug(DSHELP, "MQTT SERVER->"+String(_s->mqttServer)+"; MQTT USER->"+String(_s->mqttUser)+"; MQTT PASS->"+String(_s->mqttPass));
+        debug(DSHELP, "MQTT DEV->"+String(_s->dev_id));  
     };
 
     void virtual print_full_help() override{
         DBootEsp::print_full_help();
 
         debug(DSHELP, String(CMD_MQTT_SERVER) + "=<mqtt_serer>, "+ String(CMD_MQTT_USER)+"=<mqtt_user>, "+String(CMD_MQTT_PASS)+"=<mqtt_pass>, "+String(CMD_MQTT_PORT)+"=<mqtt_port>");
+        debug(DSHELP, String(CMD_MQTT_DEV) + "=<mqtt_dev>");
+
     };
 
       int do_set_command(String cmdStr, String valStr){

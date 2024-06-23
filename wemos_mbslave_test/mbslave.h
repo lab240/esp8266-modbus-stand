@@ -131,7 +131,7 @@ int do_set_command(WMSettings *_s, String cmdStr, String valStr){
 };
 
 
-
+/*
 int do_espboot_loop(WMSettings * _s){
   String inCommandStr=""; 
   bool stop_commnads=0;
@@ -186,7 +186,7 @@ int do_espboot_loop(WMSettings * _s){
   }
  if(stop_commnads) return 1; else return 0;
 }
-
+*/
 int correction_to_default_if_need(WMSettings *_s){
     int was_corrected=0;
     if(_s->mb_modbus_address>MAX_ID) {

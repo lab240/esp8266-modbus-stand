@@ -8,8 +8,9 @@
 #define CMD_SET_PORT_SETTINGS "setp"
 
 
-#define CMD_CMD_HELP "help"
-#define CMD_CMD_PRINT "print"
+#define CMD_HELP "help"
+#define CMD_PRINT "print"
+#define CMD_LONG "long"
 
 #define CMD_SSID "ssid"
 #define CMD_WIFI_PASSWD "wifipass"

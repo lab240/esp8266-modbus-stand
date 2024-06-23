@@ -86,15 +86,22 @@ public:
     };
 
     int virtual do_run_command(String inStr){
-        if(inStr.startsWith(CMD_CMD_HELP)){
+        if(inStr.startsWith(CMD_HELP)){
             print_full_help();
             return 1;
         }
 
-        if(inStr.startsWith(CMD_CMD_PRINT)){
+        if(inStr.startsWith(CMD_PRINT)){
             print_curr_settings();
             return 1;
         }
+
+        if(inStr.startsWith(CMD_LONG)){
+            num_tryes+=20;
+            return 1;
+        }
+
+        
 
         return 0;
 
@@ -129,6 +136,8 @@ public:
                     if(!do_set_command(cmdStr, numStr)) {
                         //wrong varable or value
                         debug(DSCOMMAND,"Wrong set parameter or value->"+cmdStr);
+                    }else{
+                        if(num_tryes<20) num_tryes+=20;
                     }
                 
                 //command string, lets do something and continue
@@ -136,6 +145,8 @@ public:
                     debug(DSCOMMAND,"command->" +String(inCommandStr));
                     if(!do_run_command(inCommandStr)){              
                         debug(DSCOMMAND, "Commnad is not recognized", TOUT);
+                    }else{
+                        if(num_tryes<20) num_tryes+=20;
                     }
                 //no incoming string, finish loop
                 // }else{
