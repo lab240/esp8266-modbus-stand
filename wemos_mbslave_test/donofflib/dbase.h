@@ -5,12 +5,14 @@
 #include "../mbsettings.h"
 
 enum debug_events{
-  DTUNDEF,
+  DTRACE,
   DTERROR,
   DTWARNING,
-  DTINFO,
-  DTOUT
+  DTINFO, 
+  DTUNDEF,
 };
+
+#define DTOUT 1
 
 
 class DBase {
@@ -22,7 +24,7 @@ class DBase {
     int silent_mode=0; 
 
   public:
-    int debug_level = 1;
+    int debug_level = 4;
   
 
     DBase(WMSettings * __s) {
@@ -36,7 +38,7 @@ class DBase {
   uint is_silent(){return silent_mode;};
 
   template <typename T>
-  void debug(String sourceStr, T debug,  int type=4, String preStr="", int strong_out_message=1) {
+  void debug(String sourceStr, T debug,  int type=DTUNDEF, String preStr="", int strong_out_message=1) {
     //if silent mode, exit
     if(is_silent()) return;
     //if DSENTER, only print \n
@@ -46,37 +48,39 @@ class DBase {
     }
 
     int let_out=0;
+
+    if(strong_out_message || debug_level>0){
+         Serial.print(">");
+    }
     
     if (debug_level > 0){
        switch(type){
-        case 0:
-          if(debug_level>3) Serial.print("TRACE");
+        case DTRACE:
+          if(debug_level>2) Serial.print("TRACE");
           break;
-        case 1:
-          if(debug_level>1) Serial.print("<!ERROR!>");
+        case DTERROR:
+          if(debug_level>0) Serial.print("<!ERROR!>");
           let_out=1;
           break;
-        case 2:
-           if(debug_level==1 || debug_level==2) Serial.print("<WARNING>");
+        case DTWARNING:
+           if(debug_level>2) Serial.print("<WARNING>");
            let_out=1;
           break;
-        case 3: 
-           if(debug_level >2) Serial.print("<INFO>");
+        case DTINFO: 
+           if(debug_level >3) Serial.print("<INFO>");
            let_out=1;
           break;
-        case 4: 
-          if(debug_level>3) Serial.print("<UNDEF>");
+        case DTUNDEF: 
+          //if(debug_level>0) Serial.print("<UNDEF>");
           let_out=1;
           break;
        }
-       if(debug_level==0 && strong_out_message){
-         Serial.print("<OUT>");
-       }
+       
        if(let_out || strong_out_message){
      //type!=4 ? Serial.print("DEBUG:") : Serial.print("OUTPUT:");
           Serial.print(sourceStr); 
           Serial.print(":");
-          if(preStr!="") Serial.print(preStr+"->");
+          if(preStr!="") Serial.print(preStr+":");
           Serial.print(debug);
           Serial.println();
         }
@@ -84,6 +88,10 @@ class DBase {
   };
 
 
+  template <typename T>
+  void debug1(String sourceStr, T debug,  int type=DTUNDEF, int strong_out_message=1) {
+    debug(sourceStr,debug,type=DTUNDEF,"",strong_out_message)=1;
+  };
 
   void debug_old(String sourceStr, String debugStr) {
       String debug_outStr = "DEBUG:" + sourceStr + ":" + debugStr;

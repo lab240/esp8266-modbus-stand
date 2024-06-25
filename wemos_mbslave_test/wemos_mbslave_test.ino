@@ -60,7 +60,7 @@ WifiCreds wificreds;
 //WMSettings settings;
 
 WMSettings * _s;
-DBootEspMqttModbus * _dboot;
+DBootEspMqttModbus * dboot;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -118,11 +118,11 @@ void setup() {
 
   Serial.println("************ Starting DBOOT ********************");
   
-  _dboot=new DBootEspMqttModbus(_s);
+  dboot=new DBootEspMqttModbus(_s);
 
   // Serial.println("************ Starting DBOOT\INIT ********************");
-  _dboot->init();
-  _dboot->print_curr_settings();
+  dboot->init();
+  dboot->print_curr_settings();
 
   // dboot.print_curr_settings();
 
@@ -132,38 +132,6 @@ void setup() {
   
   ticker.attach(0.25,tickf);
  
- /*
-
-  debug(DSEEPROM, "Salt="+String(_s->salt)+"; Address="+String(_s->mb_modbus_address)+"; RegsI="+String(_s->mb_intregs_amount)+"; RegsC="+String(_s->mb_coilregs_amount));
-  //debug(DEEPROM, "Salt="+String(_s->salt)+"; Address="+String(_s->custom_level1)+"; RegsI="+String(_s->custom_level2)+"; RegsC="+String(_s->custom_level3));
-
-  if (_s->salt != EEPROM_SALT) {
-    debug(DSEEPROM, "Invalid settings in EEPROM, trying with defaults",TERROR);
-    WMSettings defaults;
-    *_s = defaults;
-    _s->mb_modbus_address=DEFAULT_ADDRESS; //по умолчанию пусть будет 126й адрес
-    _s->mb_intregs_amount=DEFAULT_INT_REGS;
-    _s->mb_coilregs_amount=DEFAULT_COIL_REGS;
-    _s->mb_serial_baudrate=DEFAULT_MB_RATE;
-    serial_settings=DEFAULT_MB_FC;
-    _s->mb_serial_settings_num=NSERIAL_8E1; //SERIAL_8E1
-
-    debug(DSEEPROM, "DEFAULTS: Salt="+String(_s->salt), TOUT);
-    print_curr_settings(_s);
-    
-  }else{
-    //check each parameter
-    int is_corrected=correction_to_default_if_need(_s);
- 
-    serial_settings=get_serial_setings_num(_s->mb_serial_settings_num); 
-    if(is_corrected) {
-      debug(DSEEPROM, "LOADED from EEPROM with correction", TOUT);
-      print_curr_settings(_s);
-    }
-  }
-
-  */
-
   if(WIFI_ENABLE){
     debug(DSMAIN, "Init wifi settings");
     WiFi.persistent(false);
@@ -176,22 +144,23 @@ void setup() {
   // инициализируем уарт с параметрами стандартного монитора порта
 
   debug(DSENTER,0);
-  _dboot->print_welcome_help();
+  dboot->print_welcome_help();
  
   debug(DSMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
   debug(DSENTER,0);
  
   //loop of setup boot
-  _dboot->do_boot_loop();
+  dboot->do_boot_loop();
 
   debug(DSENTER,0); // \n
 
   debug(DSMAIN, "------ Start modbus emulation with parameters ------");
   // print_curr_settings(_s);
 
-  _dboot->print_curr_settings();
+  dboot->print_curr_settings();
 
-  delete(_dboot);
+  delete(dboot);
+
 
   if(WIFI_ENABLE){
     ticker.attach(0.15,tickf);
@@ -206,7 +175,10 @@ void setup() {
   debug(DSMAIN, "-------------------------------------");
   debug(DSMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
   debug(DSMAIN, "-------------------------------------");
-
+  
+  mb_dev->enable_silent();
+  publisher_mqtt->enable_silent();
+  
   ::delay(200);  // дожидаемся окончания передач в уарт
   
 /*
