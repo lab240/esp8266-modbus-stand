@@ -166,12 +166,14 @@ void setup() {
 void loop() {
 
   mb.task(); // слушаем модбас
-  //yield();   // отпускаем для обработки Wi-Fi
+  yield();   // отпускаем для обработки Wi-Fi
 
   if(softTimer<(millis())){
      update_regs(&mb, intregs_amount, coilregs_amount); // обновляем регистры по таймеру
      softTimer= millis() + 500; // перевзводим на полсекунды
   }
+
+
 }
 
 
