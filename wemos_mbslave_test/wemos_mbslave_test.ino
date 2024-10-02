@@ -15,6 +15,8 @@
 #define DEBUG 1
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
+#define SWAPSERIAL 0
+
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
 
@@ -94,16 +96,17 @@ void setup() {
   // Serial.println("************ Starting DBOOT\INIT ********************");
   dboot->init();
   dboot->print_curr_settings();
-
+  
+  mb_dev=new DDevice(_s); 
+  
   if(MQTT_ENABLE){
-
-    Serial.println("DEV="+String(_s->dev_id)+", port="+String(_s->mqttPort));
 
     publisher_mqtt=new DPublisherMqttMBstand(_s, nullptr, 0);
     publisher_mqtt->init(&que_wanted);
-    
-    mb_dev=new DDevice(_s);
     mb_dev->init(publisher_mqtt, &que_wanted);
+  }else{
+    dprogramm.debug(DSMAIN,"Init mb_dev with NO MQTT MODE");
+    mb_dev->init(nullptr,nullptr);
   }
 
 
@@ -158,12 +161,14 @@ void setup() {
   dprogramm.debug(DSMAIN, "-------------------------------------");
   
   // All classes turn to silent mode of printing to serial
-  mb_dev->enable_silent();
-  publisher_mqtt->enable_silent();
-  dprogramm.enable_silent();
-  
+    if(SWAPSERIAL){
+    mb_dev->enable_silent();
+    publisher_mqtt->enable_silent();
+    dprogramm.enable_silent();
+    ::delay(200); 
+  }
   //wait for sending to serial
-  ::delay(200); 
+
 
   //init Serial port with modbus settings
   Serial.begin( _s->mb_serial_baudrate, serial_settings); 
@@ -173,7 +178,8 @@ void setup() {
   digitalWrite(POWER_PIN, HIGH);
 
   //Swap hardware serial to D7,D8
-  Serial.swap();
+  if(SWAPSERIAL) Serial.swap();
+
   
   mbus_obj.begin(&Serial);  //указание порта для модбас
   mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
@@ -181,8 +187,13 @@ void setup() {
   mb_regs=new MBRegs(_s,&mbus_obj,10,10);
   mb_regs->init();
 
+  
+  dprogramm.debug(DSMAIN,"Modbus init regs... enabled");
+
 //callback when request comes
   mbus_obj.onGetHreg(0,cbReadHreg,_s->mb_intregs_amount);
+
+  dprogramm.debug(DSMAIN,"Callback fot modbus regs... enabled");
 
   led_mode_setup=0; //finish setup blinking
 }
@@ -194,9 +205,9 @@ void loop() {
   mb_dev->supply_loop();
 
   //yield();   // отпускаем для обработки Wi-Fi
-  if(softTimer<(millis())) mb_regs->update_regs(); // обновляем регистры по таймеру
+  //if(softTimer<(millis())) mb_regs->update_regs(); // обновляем регистры по таймеру
 
-  softTimer= millis() + 500;
+  //softTimer= millis() + 500;
 }
 
 void tickf(){

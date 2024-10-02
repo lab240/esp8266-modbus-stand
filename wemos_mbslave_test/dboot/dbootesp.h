@@ -15,6 +15,7 @@ public:
    DBootEsp(WMSettings * __s): DBootA(__s) {};
   
    void virtual init() override{
+    DBootA::init();
     set_defaults_if_need();
    };
 

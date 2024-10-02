@@ -6,10 +6,6 @@
 
 //#include "dqueue.h"
 
-#if !defined(DOFFLINE)
-    #define DOFFLINE 0
-#endif
-
 #define DEVICE_VERBOSE 1
 
 
@@ -19,11 +15,16 @@
 #define MS_LOOP_TIMING 200
 #define MAX_SLOW_LOOP_COUNTER 600
 
+#define DSDEVICE "DDEVICE" 
+
 class DDevice: public DBase {
   private:
   
     
  protected:
+
+    uint mqtt_enabled=1;
+
     String reasonStr = "";
     uint8_t  blink_loop = 0;
     uint current_blink_type = 0;
@@ -50,6 +51,12 @@ class DDevice: public DBase {
       pub = _pub;
       que_wanted=_q;
       mytimer = millis();
+
+      if(pub==nullptr){
+        debug(DSDEVICE,"NO MQTT MODE");
+        mqtt_enabled=0;
+      } 
+      
       init_ok = 1;
 
     };
@@ -63,7 +70,7 @@ class DDevice: public DBase {
            slow_loop(mycounter);
            
         }
-
+/*
         if(mycounter >MAX_LOOPS && mycounter <=MAX_LOOPS+MAX_SENSORS){
           //debug("SUPPLY_LOOP", "SENSORS LOOP");
           sensors_loop(mycounter-MAX_LOOPS);
@@ -74,12 +81,13 @@ class DDevice: public DBase {
           very_slow_loop(mycounter2);
           mycounter2++;
         }
-
+*/
         mycounter++;
         //300 ms loop
        
         fast_loop();
-        pub_wanted_loop();
+
+        if(mqtt_enabled) pub_wanted_loop();
                
         if (mycounter > MAX_LOOP_COUNTER) {
           mycounter = 0;
@@ -94,7 +102,7 @@ class DDevice: public DBase {
       }
 
       native_loop();
-      pub->mqtt_loop();
+      if(mqtt_enabled) pub->mqtt_loop();
 
     };
 
@@ -131,7 +139,7 @@ class DDevice: public DBase {
     void virtual slow_loop(int mycounter){
         if (mycounter == 0) {
           //debug("SUPPLY_LOOP", "Reconnect loop");
-          if(!DOFFLINE) reconnect_loop();
+          if(mqtt_enabled) reconnect_loop();
         }
 
         if (mycounter == 1) {
@@ -155,6 +163,10 @@ class DDevice: public DBase {
     void virtual display_loop(){};
 
     int virtual pub_wanted_loop(){
+
+      //do nothing if mqtt is not enabled  
+      if(!mqtt_enabled) return 0;
+
       //debug("SUPPLY_QUEUE", "Loop queue wanted");
 
       if (que_wanted->count()==0) return 0;
@@ -166,12 +178,15 @@ class DDevice: public DBase {
         m_just_synced=1;
       }
 
-      do_want_event();
+      if(mqtt_enabled) do_want_event();
       return 1;
       
     };
 
     void virtual do_want_event(){
+        //do nothing if mqtt is not enabled  
+        if(!mqtt_enabled) return;
+        
         if(what_to_want==PUBLISHER_WANT_SAVE){
         save();
         pub->publish_to_info_topic("N: saved");
@@ -189,6 +204,9 @@ class DDevice: public DBase {
 
 
     void reconnect_loop() {
+      //do nothing if mqtt is not enabled  
+      if(!mqtt_enabled) return;
+
       if (!pub->is_connected() || !pub->is_time_synced()) {
         pub->reconnect();
       }
@@ -196,17 +214,23 @@ class DDevice: public DBase {
 
     void virtual service_loop() {
 
-      if(DEVICE_VERBOSE) 
+      if(DEVICE_VERBOSE && mqtt_enabled) 
        debug("SHEDULER", "**Service loop->TIMESTAMP=" +  s_get_timestamp('<','>') + ", t_sync=" + String(pub->is_time_synced())+ 
            ", user="+ String(_s->mqttUser)+", dev_id=" + String(_s->dev_id)+" ,online="+String(pub->is_connected())+
            ", size_s="+String(sizeof(*_s))
        );
 
-      if(pub->is_connected()){
-        pub->publish_uptime();
-        pub->publish_json();
-      } 
-      
+       if(DEVICE_VERBOSE)
+        debug("SHEDULER", "**Service loop->TIMESTAMP=" +  s_get_timestamp('<','>') + 
+           ", user="+ String(_s->mqttUser)+", dev_id=" + String(_s->dev_id)+", size_s="+String(sizeof(*_s))
+       );
+
+      if(mqtt_enabled){
+        if(pub->is_connected()){
+          pub->publish_uptime();
+          pub->publish_json();
+        } 
+      }   
    
     };
 
