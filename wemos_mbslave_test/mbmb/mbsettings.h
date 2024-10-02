@@ -2,7 +2,7 @@
 #define __mbsettings__
 
 #include "Arduino.h"
-#include "donofflib/dsettings.h"
+#include "../donofflib/dsettings.h"
 
 #define NUM_TRY 10   //waiting command pause
 

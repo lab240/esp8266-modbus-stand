@@ -30,7 +30,7 @@ public:
         debug(DSEEPROM,"Loading EEPROM...");
         load();
         debug(DSEEPROM, "Read setings from EEPROM, currect Salt="+ String(EEPROM_SALT)+ " EEPROM SALT=" + String(_s->salt));
-        was_init=1;
+        init_ok=1;
     };
 
 

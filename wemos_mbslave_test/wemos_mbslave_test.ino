@@ -1,30 +1,26 @@
-#include <ModbusRTU.h>
-#include <EEPROM.h>
+
 #include <Ticker.h>
-#include <ESP8266TrueRandom.h>
 #include <PubSubClient.h>
 #include <Queue.h>
 
 #include <ESP8266WiFi.h>
 
-#include "mbslave.h"
 #include "donofflib/dpublishmqtt.h"
 #include "donofflib/ddevice.h"
-#include "mbpublish.h"
+#include "mbmb/mbpublish.h"
 #include "dboot/dbootmodbus.h"
+#include "mbmb/mbmbregs.h"
+
 
 #define DEBUG 1
-#define WIFI_ENABLE 1
-#define MQTT_ENABLE 1
-#define POWER_PIN D1 //old version
-//#define POWER_PIN D5 //new version
+#define WIFI_ENABLE 0
+#define MQTT_ENABLE 0
+//#define POWER_PIN D1 //old version
+#define POWER_PIN D5 //new version
 
 //#define LED_DATA D6
 
 #define LED_DATA LED_BUILTIN
-
-//константы адреса модбас регистра -1 для правильного отображения в mbpool
-#define NUM_TRY 10
 
 // #define EXTRAREGS 5 
 
@@ -39,37 +35,27 @@
 // #define modbus_address  _s->custom_level1
 // #define intregs_amount  _s->custom_level2
 // #define coilregs_amount _s->custom_level3
-// #define serial_baudrate _s->custom_level4
+// #define  _s->custom_level4
 // #define serial_settings_num _s->custom_level_notify1
 
 SerialConfig serial_settings=DEFAULT_MB_FC;
 
-
-#define R_ADDR 0
-#define R_HOUR 1
-#define R_MINS 2
-#define R_SECS 3
-
-
-ModbusRTU mbus_obj;                 // объект для взаимодействия с либой ModbusRTU
+ModbusRTU mbus_obj;                
 
 Ticker ticker;
 
 WifiCreds wificreds;
-
-//WMSettings settings;
 
 WMSettings * _s;
 DBootEspMqttModbus * dboot;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-
-// DPublisherMQTT pubmqtt(_s, &client);
-// DDevice mb_dev(_s);
+DProg dprogramm;
 
 DPublisherMqtt* publisher_mqtt;
 DDevice* mb_dev;
+MBRegs* mb_regs;
 
 //void callback(char* topic, byte* payload, unsigned int length);
 Queue<pub_events> que_wanted= Queue<pub_events>(MAX_QUEUE_WANTED);
@@ -84,9 +70,11 @@ uint16_t cbReadHreg(TRegister* reg, uint16_t numregs){
   return reg->value;
 }
 
+/*
 void callback(char* topic, byte* payload, unsigned int length){
   publisher_mqtt->callback(topic,payload,length);
 }
+*/
 
 void setup() {
   Serial.begin(115200, SERIAL_8N1);  
@@ -97,26 +85,9 @@ void setup() {
   delay(1000);
   
   //init espboot
+  _s=new(WMSettings);
 
-  if(MQTT_ENABLE){
-
-    WMSettings defaults;
-    _s=new(WMSettings);
-    *_s=defaults;
-    Serial.println("DEV="+String(_s->dev_id)+", port="+String(_s->mqttPort));
-    
-    
-    //client.setCallback(callback);
-    //publisher_mqtt=new DPublisherMqtt(_s, &client);
-    publisher_mqtt=new DPublisherMqttMBstand(_s, nullptr, 0);
-    publisher_mqtt->init(&que_wanted);
-    
-    mb_dev=new DDevice(_s);
-    mb_dev->init(publisher_mqtt, &que_wanted);
-
-  }
-
-  Serial.println("************ Starting DBOOT ********************");
+    Serial.println("************ Starting DBOOT ********************");
   
   dboot=new DBootEspMqttModbus(_s);
 
@@ -124,7 +95,17 @@ void setup() {
   dboot->init();
   dboot->print_curr_settings();
 
-  // dboot.print_curr_settings();
+  if(MQTT_ENABLE){
+
+    Serial.println("DEV="+String(_s->dev_id)+", port="+String(_s->mqttPort));
+
+    publisher_mqtt=new DPublisherMqttMBstand(_s, nullptr, 0);
+    publisher_mqtt->init(&que_wanted);
+    
+    mb_dev=new DDevice(_s);
+    mb_dev->init(publisher_mqtt, &que_wanted);
+  }
+
 
   led_mode_setup =1;
 
@@ -133,28 +114,28 @@ void setup() {
   ticker.attach(0.25,tickf);
  
   if(WIFI_ENABLE){
-    debug(DSMAIN, "Init wifi settings");
+    dprogramm.debug(DSMAIN, "Init wifi settings");
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
   }
   
-  debug(DSMAIN, "-------------- Welcome  ------------------------------------------------------------------------");
+  dprogramm.debug(DSMAIN, "-------------- Welcome  ------------------------------------------------------------------------");
 
   // инициализируем уарт с параметрами стандартного монитора порта
 
-  debug(DSENTER,0);
+  dprogramm.debug(DSENTER,0);
   dboot->print_welcome_help();
  
-  debug(DSMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
-  debug(DSENTER,0);
+  dprogramm.debug(DSMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
+  dprogramm.debug(DSENTER,0);
  
   //loop of setup boot
   dboot->do_boot_loop();
 
-  debug(DSENTER,0); // \n
+  dprogramm.debug(DSENTER,0); // \n
 
-  debug(DSMAIN, "------ Start modbus emulation with parameters ------");
+  dprogramm.debug(DSMAIN, "------ Start modbus emulation with parameters ------");
   // print_curr_settings(_s);
 
   dboot->print_curr_settings();
@@ -166,40 +147,39 @@ void setup() {
     ticker.attach(0.15,tickf);
     struct station_config stationConf;
     wifi_station_get_config (&stationConf);
-    debug(DSWIFI,"Try with ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|");
+    dprogramm.debug(DSWIFI,"Try with ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|");
     WiFi.begin();
-    mywifi_try_to_connect();
+    dprogramm.mywifi_try_to_connect();
     ticker.attach(0.25,tickf);
   }
   
-  debug(DSMAIN, "-------------------------------------");
-  debug(DSMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
-  debug(DSMAIN, "-------------------------------------");
+  dprogramm.debug(DSMAIN, "-------------------------------------");
+  dprogramm.debug(DSMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
+  dprogramm.debug(DSMAIN, "-------------------------------------");
   
+  // All classes turn to silent mode of printing to serial
   mb_dev->enable_silent();
   publisher_mqtt->enable_silent();
+  dprogramm.enable_silent();
   
-  ::delay(200);  // дожидаемся окончания передач в уарт
-  
-/*
-  //Serial.begin(serial_baudrate, (uint8_t) serial_settings_num); // инициализация уарт с настройками для Модбас
-  Serial.begin(_s->mb_serial_baudrate, serial_settings); // инициализация уарт с настройками для Модбас
+  //wait for sending to serial
+  ::delay(200); 
+
+  //init Serial port with modbus settings
+  Serial.begin( _s->mb_serial_baudrate, serial_settings); 
   pinMode(POWER_PIN, OUTPUT);
+  
+  //Power MAX485 board
   digitalWrite(POWER_PIN, HIGH);
+
+  //Swap hardware serial to D7,D8
   Serial.swap();
-*/
+  
   mbus_obj.begin(&Serial);  //указание порта для модбас
   mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
 
-  for(int h_reg=0; h_reg<_s->mb_intregs_amount; h_reg++){
-    mbus_obj.addHreg(h_reg); //add register
-    mbus_obj.Hreg(h_reg,0);  //add 0 to each reg
-  }
-
-   for(int c_reg=0; c_reg<_s->mb_coilregs_amount; c_reg++){
-    mbus_obj.addCoil(c_reg); //add register
-    mbus_obj.Coil(c_reg,0);  //add 0 to each reg
-  }
+  mb_regs=new MBRegs(_s,&mbus_obj,10,10);
+  mb_regs->init();
 
 //callback when request comes
   mbus_obj.onGetHreg(0,cbReadHreg,_s->mb_intregs_amount);
@@ -214,37 +194,10 @@ void loop() {
   mb_dev->supply_loop();
 
   //yield();   // отпускаем для обработки Wi-Fi
-  if(softTimer<(millis())) update_regs(); // обновляем регистры по таймеру
+  if(softTimer<(millis())) mb_regs->update_regs(); // обновляем регистры по таймеру
+
+  softTimer= millis() + 500;
 }
-
-void update_regs(){
-  uint32_t sec = millis() / 1000ul;      // полное количество секунд со старта платы
-  uint16_t timeHours = (sec / 3600ul);        // часы
-  uint16_t timeMins = (sec % 3600ul) / 60ul;  // минуты
-  uint16_t timeSecs = (sec % 3600ul) % 60ul;  // секунды
-
-  // заполняем реги значениями времени
-  mbus_obj.Hreg(R_ADDR, _s->mb_modbus_address); 
-  mbus_obj.Hreg(R_HOUR, timeHours);
-  mbus_obj.Hreg(R_MINS, timeMins);
-  mbus_obj.Hreg(R_SECS, timeSecs);
-
-  //next regs are random
-
-  if(_s->mb_intregs_amount!=0)
-   for(int h_reg=R_SECS+1; h_reg<_s->mb_intregs_amount; h_reg++){
-      //mbus_obj.Hreg(h_reg,random(1,32000));
-      mbus_obj.Hreg(h_reg,ESP8266TrueRandom.random(32000));
-   }
-  
-  if(_s->mb_coilregs_amount!=0)
-   for(int c_reg=0; c_reg<_s->mb_coilregs_amount; c_reg++){
-     mbus_obj.Coil(c_reg,ESP8266TrueRandom.randomBit());
-   }
-
-
-  softTimer= millis() + 500; // перевзводим на полсекунды
-} 
 
 void tickf(){
   if(led_mode_setup) {

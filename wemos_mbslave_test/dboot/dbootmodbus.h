@@ -18,7 +18,7 @@ public:
 
    void virtual init() override{
         DBootEspMqtt::init();
-        set_defaults_if_need();
+        //set_defaults_if_need();
         correction_to_default_if_need();
    };
 
@@ -35,12 +35,7 @@ public:
 
     }
 
-/*
-    void virtual print_welcome_help() override{
-        DBootWithWifi::print_welcome_help();
 
-    }
-*/
     void virtual print_full_help() override {
         DBootEspMqtt::print_full_help();
 
@@ -51,63 +46,7 @@ public:
         debug(DSHELP, String(CMD_SET_PORT_SETTINGS) + "=<NUM_OF_SETTNGS> portsettings for modbus, possible values: \"=6\"->SERIAL_8N1, \"=38\"->SERIAL_8E1");
     }
 
-/*
-    int do_espboot_loop(){
-        String inCommandStr=""; 
-        bool stop_commnads=0;
 
-        while (!stop_commnads){
-
-            inCommandStr=get_command_str();
-            
-            debug(DSENTER,0);
-            
-            if(inCommandStr!=""){
-            debug(DSCOMMAND, "Received incoming string->"+String(inCommandStr));
-            
-            //skip loop command
-            if( inCommandStr.length()<=3 && inCommandStr.charAt(0)==SKIP_CHAR) {
-                debug(DSCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Skip waiting command", TOUT);
-                stop_commnads=1;
-                return 0;
-            }
-
-            if(inCommandStr.length()>3 && inCommandStr.indexOf('=')==-1){
-                //commands 
-                debug(DSCOMMAND,"command >" +String(inCommandStr) +"< incoming");
-                if(inCommandStr.startsWith(CMD_CMD_HELP)){
-                print_full_help();
-                }
-
-                if(inCommandStr.startsWith(CMD_CMD_PRINT)){
-                print_curr_settings(_s);
-                }
-            
-            //<parameter>=<value>
-            }else if(inCommandStr.indexOf('=')!=-1){  
-
-                String cmdStr=  inCommandStr.substring(0,inCommandStr.indexOf('='));
-                String numStr = inCommandStr.substring(inCommandStr.indexOf('=')+1,inCommandStr.length());
-                debug(DSCOMMAND, "Command->"+ cmdStr+", Value->"+numStr);
-                if(!do_set_command(_s, cmdStr, numStr)) {
-                debug(DSCOMMAND,"Wrong set parameter or value->"+cmdStr);
-                }
-            
-            }else{
-                debug(DSCOMMAND, "Commnad is not recognized", TOUT);
-            }
-            
-            }else{
-            debug(DSCOMMAND, "No incomming string");
-            stop_commnads=1;
-            return 0;
-            }
-
-        }
-        if(stop_commnads) return 1; else return 0;
-    };
-
-*/
     int do_set_command(String cmdStr, String valStr){
         
         if(DBootEspMqtt::do_set_command(cmdStr,valStr)) return 1;

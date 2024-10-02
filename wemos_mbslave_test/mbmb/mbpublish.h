@@ -2,9 +2,8 @@
 #define __mbpublish1__
 
 #include "mbcommands.h"
-#include "mbserial.h"
 #include "mbsettings.h"
-#include "donofflib/dpublishmqtt.h"
+#include "../donofflib/dpublishmqtt.h"
 
 class DPublisherMqttMBstand : public DPublisherMqtt
 {

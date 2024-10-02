@@ -14,13 +14,16 @@ protected:
 public:
    DBootEspMqtt(WMSettings * __s): DBootEsp(__s) {};
   
+  /*
    void virtual init() override{
-    DBootEsp::init();
-    set_defaults_if_need();
+     DBootEsp::init();
    };
+*/
 
-   int virtual set_defaults_if_need() =0; //change it if SALT is wrong and you need set default values
-
+  //change it if SALT is wrong and you need set default values
+   int virtual set_defaults_if_need() =0; 
+   
+   
    void virtual print_curr_settings() override {
 
         DBootEsp::print_curr_settings();

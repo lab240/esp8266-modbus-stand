@@ -1,6 +1,7 @@
 {
     "cSpell.enabled": false,
     "files.associations": {
-        "random": "cpp"
+        "random": "cpp",
+        "numbers": "cpp"
     }
 }

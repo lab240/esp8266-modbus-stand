@@ -1,123 +1,26 @@
 #ifndef donoffbase_h
 #define donoffbase_h
 
-#include "Arduino.h"
-#include "../mbsettings.h"
+#include <EEPROM.h>
 
-enum debug_events{
-  DTRACE,
-  DTERROR,
-  DTWARNING,
-  DTINFO, 
-  DTUNDEF,
-};
-
-#define DTOUT 1
+#include "dprog.h"
+#include "dsettings.h"
 
 
-class DBase {
+#define D_MEM_SIZE 512
+
+class DBase: public DProg {
   protected:
     
     WMSettings * _s;
     
     //enable print out on default (if Serial is used for data tranfer, disable it by desable_print_debug())
-    int silent_mode=0; 
-
   public:
-    int debug_level = 4;
-  
-
-    DBase(WMSettings * __s) {
+    
+    DBase(WMSettings * __s): DProg()  {
       _s = __s;
     };
-
-  void enable_silent(){silent_mode=1;};
-
-  void disable_silent(){silent_mode=0;};
-
-  uint is_silent(){return silent_mode;};
-
-  template <typename T>
-  void debug(String sourceStr, T debug,  int type=DTUNDEF, String preStr="", int strong_out_message=1) {
-    //if silent mode, exit
-    if(is_silent()) return;
-    //if DSENTER, only print \n
-    if(debug_level>0 && sourceStr==DSENTER){
-      Serial.println("\n");
-      return;
-    }
-
-    int let_out=0;
-
-    if(strong_out_message || debug_level>0){
-         Serial.print(">");
-    }
     
-    if (debug_level > 0){
-       switch(type){
-        case DTRACE:
-          if(debug_level>2) Serial.print("TRACE");
-          break;
-        case DTERROR:
-          if(debug_level>0) Serial.print("<!ERROR!>");
-          let_out=1;
-          break;
-        case DTWARNING:
-           if(debug_level>2) Serial.print("<WARNING>");
-           let_out=1;
-          break;
-        case DTINFO: 
-           if(debug_level >3) Serial.print("<INFO>");
-           let_out=1;
-          break;
-        case DTUNDEF: 
-          //if(debug_level>0) Serial.print("<UNDEF>");
-          let_out=1;
-          break;
-       }
-       
-       if(let_out || strong_out_message){
-     //type!=4 ? Serial.print("DEBUG:") : Serial.print("OUTPUT:");
-          Serial.print(sourceStr); 
-          Serial.print(":");
-          if(preStr!="") Serial.print(preStr+":");
-          Serial.print(debug);
-          Serial.println();
-        }
-    }
-  };
-
-
-  template <typename T>
-  void debug1(String sourceStr, T debug,  int type=DTUNDEF, int strong_out_message=1) {
-    debug(sourceStr,debug,type=DTUNDEF,"",strong_out_message)=1;
-  };
-
-  void debug_old(String sourceStr, String debugStr) {
-      String debug_outStr = "DEBUG:" + sourceStr + ":" + debugStr;
-      if (debug_level > 0) Serial.println(debug_outStr);
-    };
-
-  String get_time_str(unsigned long val) {
-      //debug("BASETIMESTR", String(val));
-      String outStr;
-      ulong wt = val / 1000;
-      uint h = wt / 3600;
-      wt = wt % 3600;
-      uint m = wt / 60;
-      uint s = wt % 60;
-      if(h<10) outStr="0"+String(h); else outStr=String(h);
-      outStr+=":";
-      if(m<10) outStr+="0"+String(m); else outStr+=String(m);
-      outStr+=":";
-      if(s<10) outStr+="0"+String(s); else outStr+=String(s);
-      
-      return outStr;
-    };
-
- String get_uptime_str(){
-        return get_time_str(millis());
-    };
 
 void virtual save(){
      debug("SAVE", "Lets' save EEPROM");
@@ -133,45 +36,12 @@ void load(){
     EEPROM.end();
 }
 
-String virtual s_get_timestamp(char c_b='T', char c_e='Z'){
-    String s_timestamp;
-    time_t tnow = time(nullptr);
-    struct tm * _t;
-    _t=localtime(&tnow);
-    s_timestamp=String(_t->tm_year+1900);
-    s_timestamp+="-";
-    s_timestamp+= _t->tm_mon+1<10? "0"+String(_t->tm_mon+1): String(_t->tm_mon+1);
-    s_timestamp+="-";
-    s_timestamp+= _t->tm_mday<10? "0"+String(_t->tm_mday): String(_t->tm_mday);
-    s_timestamp+=c_b;
-    s_timestamp+=_t->tm_hour <10? "0"+String(_t->tm_hour): String(_t->tm_hour);
-    s_timestamp+=":";
-    s_timestamp+= _t->tm_min<10? "0"+String(_t->tm_min): String(_t->tm_min);
-    s_timestamp+=":";
-    s_timestamp+=_t->tm_sec<10? "0"+String(_t->tm_sec): String(_t->tm_sec);
-    s_timestamp+=c_e;
-    //debug("TIMESTAMP", s_timestamp);
-    return s_timestamp;
-};
 
 void virtual reset(){
   ESP.restart();
 }
 
-uint virtual d_hour(){
-  time_t tnow = time(nullptr);
-  struct tm * timeinfo;
-  timeinfo=localtime(&tnow);
-  return timeinfo->tm_hour;
-  //timeinfo->tm_hour, 
-  //timeinfo->tm_min, 
-  //timeinfo->tm_sec, 
-  //timeinfo->tm_mday, 
-  //timeinfo->tm_mon, 
-  //timeinfo->tm_year+1900);
 
-
-};
 int set_settings_val_int(String _command, String _valStr, int *_setting_val, int _min, int _max, int autosave=1)
 {
   int test_val;
