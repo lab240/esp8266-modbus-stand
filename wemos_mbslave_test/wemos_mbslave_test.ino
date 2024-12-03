@@ -15,12 +15,12 @@
 #define DEBUG 1
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
-#define SWAPSERIAL 0
+#define SWAPSERIAL 1
 
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
 
-//#define LED_DATA D6
+#define LED_DATA2 D0
 
 #define LED_DATA LED_BUILTIN
 
@@ -82,7 +82,7 @@ void setup() {
   Serial.begin(115200, SERIAL_8N1);  
   delay(1000);
 
-  Serial.println("************ Starting MQTT ********************");
+  Serial.println("************ Starting Modbus Emulator 0.1b ********************");
 
   delay(1000);
   
@@ -113,7 +113,8 @@ void setup() {
   led_mode_setup =1;
 
   pinMode(LED_DATA, OUTPUT);
-  
+  pinMode(LED_DATA2, OUTPUT);
+
   ticker.attach(0.25,tickf);
  
   if(WIFI_ENABLE){
@@ -161,15 +162,16 @@ void setup() {
   dprogramm.debug(DSMAIN, "-------------------------------------");
   
   // All classes turn to silent mode of printing to serial
-    if(SWAPSERIAL){
+  if(SWAPSERIAL==1){
     mb_dev->enable_silent();
-    publisher_mqtt->enable_silent();
     dprogramm.enable_silent();
-    ::delay(200); 
+    delay(200); 
   }
+  
+  Serial.println("Switch all classes to silent mode");
+
   //wait for sending to serial
-
-
+  
   //init Serial port with modbus settings
   Serial.begin( _s->mb_serial_baudrate, serial_settings); 
   pinMode(POWER_PIN, OUTPUT);
@@ -200,14 +202,17 @@ void setup() {
 
 void loop() {
 
-  //mbus_obj.task(); // слушаем модбас
+  //digitalWrite(LED_DATA2, HIGH);
+  mbus_obj.task(); // слушаем модбас
   //if (client.connected()) client.loop();
   mb_dev->supply_loop();
-
+  
   //yield();   // отпускаем для обработки Wi-Fi
-  //if(softTimer<(millis())) mb_regs->update_regs(); // обновляем регистры по таймеру
-
-  //softTimer= millis() + 500;
+  if(softTimer<(millis())) {
+     mb_regs->update_regs(); // обновляем регистры по таймеру softTimer= millis() + 500;
+     digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
+     softTimer=millis()+500;
+  }
 }
 
 void tickf(){

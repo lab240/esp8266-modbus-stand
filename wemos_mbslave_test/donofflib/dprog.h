@@ -65,15 +65,22 @@ class DProg {
   
     DProg() {};
 
+  void virtual enable_silent(){silent_mode=1;};
+
+  void virtual disable_silent(){silent_mode=0;};
+
+  uint is_silent(){return silent_mode;};
+
+
 
   template <typename T>
-  void debug(String sourceStr, T debug,  int type=DTUNDEF, String preStr="", int strong_out_message=1) {
+  uint debug(String sourceStr, T debug,  int type=DTUNDEF, String preStr="", int strong_out_message=1) {
     //if silent mode, exit
-    if(is_silent()) return;
+    if(is_silent()) return 0;
     //if DSENTER, only print \n
     if(debug_level>0 && sourceStr==DSENTER){
       Serial.println("\n");
-      return;
+      return 1;
     }
 
     int let_out=0;
@@ -114,6 +121,7 @@ class DProg {
           Serial.println();
         }
     }
+    return 2;
   };
 
 
@@ -148,12 +156,6 @@ class DProg {
         return get_time_str(millis());
     };
 
-
-  void enable_silent(){silent_mode=1;};
-
-  void disable_silent(){silent_mode=0;};
-
-  uint is_silent(){return silent_mode;};
 
   uint virtual d_hour(){
     time_t tnow = time(nullptr);

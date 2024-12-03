@@ -61,6 +61,13 @@ class DDevice: public DBase {
 
     };
 
+    void virtual enable_silent(){
+      if(pub !=nullptr){
+        pub->enable_silent();
+      }
+      DBase::enable_silent();
+    }
+
     void supply_loop() {
 
       if ((millis() - mytimer) >= MS_LOOP_TIMING ) {

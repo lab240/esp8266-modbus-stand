@@ -35,6 +35,9 @@ class MBRegs: public DBase {
     };
 
     void virtual update_regs(){
+
+        _mb->Hreg(0,_s-> mb_modbus_address);
+
         uint32_t sec = millis() / 1000ul;      // полное количество секунд со старта платы
         uint16_t timeHours = (sec / 3600ul);        // часы
         uint16_t timeMins = (sec % 3600ul) / 60ul;  // минуты
@@ -48,7 +51,7 @@ class MBRegs: public DBase {
 
         //next regs are random
 
-        if(hregs_amount!=0) fill_hold_regs(R_SECS+1,hregs_amount-R_SECS);  
+        if(hregs_amount!=0) fill_hold_regs(R_SECS+1,hregs_amount);  
 
         if(cregs_amount!=0) fill_coil_regs(0,cregs_amount); 
 
