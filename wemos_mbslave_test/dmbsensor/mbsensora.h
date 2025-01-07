@@ -15,14 +15,20 @@ protected:
     int device_id;                        // Device identifier
     std::vector<input_register_t> input_registers; // Vector of input registers
     std::vector<coil_t> coils;            // Vector of coil registers
-    int sensitive_register_index;         // Index of the sensitive register
+    int main_register_index;         // Index of the main register
     int baud_rate;                        // Communication baud rate
     int port;                             // Port number
 
 public:
     // Constructor: Initializes the device with the given parameters
-    modbus_sensor(int id, int num_input_registers, int num_coils, int baud_rate, int port, int sensitive_register_index)
-        : device_id(id), input_registers(num_input_registers), coils(num_coils), baud_rate(baud_rate), port(port), sensitive_register_index(sensitive_register_index) {}
+    modbus_sensor(int id, int num_input_registers, int num_coils, int baud_rate, int port, int main_register_index)
+        : device_id(id), input_registers(num_input_registers), coils(num_coils), baud_rate(baud_rate), port(port), main_register_index(main_register_index) {}
+
+    void sensor_loop(){
+        
+    
+    }
+
 
     // Reads the value of an input register by its index
     uint16_t read_input_register(int index) {
@@ -65,12 +71,12 @@ public:
         return device_id;
     }
 
-    // Returns the value of the sensitive register
+    // Returns the value of the main register
     uint16_t get_value() const {
-        if (sensitive_register_index >= 0 && sensitive_register_index < input_registers.size()) {
-            return input_registers[sensitive_register_index].value;
+        if (main_register_index >= 0 && main_register_index < input_registers.size()) {
+            return input_registers[main_register_index].value;
         } else {
-            Serial.println("Error: Invalid sensitive register index.");
+            Serial.println("Error: Invalid main register index.");
             return 0;
         }
     }

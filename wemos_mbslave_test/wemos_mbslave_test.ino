@@ -9,7 +9,7 @@
 #include "donofflib/ddevice.h"
 #include "mbmb/mbpublish.h"
 #include "dboot/dbootmodbus.h"
-#include "mbmb/mbmbregs.h"
+#include "mbmb/mbmbregs-random.h"
 
 
 #define DEBUG 1
@@ -57,7 +57,7 @@ DProg dprogramm;
 
 DPublisherMqtt* publisher_mqtt;
 DDevice* mb_dev;
-MBRegs* mb_regs;
+MBRegsRandom* mb_regs;
 
 //void callback(char* topic, byte* payload, unsigned int length);
 Queue<pub_events> que_wanted= Queue<pub_events>(MAX_QUEUE_WANTED);
@@ -186,7 +186,7 @@ void setup() {
   mbus_obj.begin(&Serial);  //указание порта для модбас
   mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
 
-  mb_regs=new MBRegs(_s,&mbus_obj,10,10);
+  mb_regs=new MBRegsRandom(_s,&mbus_obj,10,10);
   mb_regs->init();
 
   

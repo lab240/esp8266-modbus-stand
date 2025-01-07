@@ -1,8 +1,7 @@
-#ifndef __mbmbregs__
-#define __mbmbregs__
+#ifndef __mbmbregsrandom__
+#define __mbmbregsrandom__
 
-#include <ModbusRTU.h>
-
+#include "mbmbregsa.h"
 
 #define R_ADDR 0
 #define R_HOUR 1
@@ -10,30 +9,16 @@
 #define R_SECS 3
 
 
-class MBRegs: public DBase {
+class MBRegsRandom: public MBRegsa{
   private:
    
-   ModbusRTU * _mb;
-   uint hregs_amount;
-   uint cregs_amount;
-   uint init_ok=0;
-    
- protected:
+  protected:
    
 
   public:
-    MBRegs(WMSettings * __s, ModbusRTU * __mb, uint __hregsa, uint __cregsa): DBase(__s) {
-        _mb=__mb;
-        hregs_amount=__hregsa;
-        cregs_amount=__cregsa;
-    };
+    MBRegsRandom(WMSettings * __s, ModbusRTU * __mb, uint __hregsa, uint __cregsa): MBRegsa(__s,__mb,__hregsa,__cregsa) {};
 
-    void init() {
-        init_hold_regs(0,hregs_amount);
-        init_coil_regs(0,cregs_amount);
-        init_ok = 1;
-    };
-
+   
     void virtual update_regs(){
 
         _mb->Hreg(0,_s-> mb_modbus_address);
