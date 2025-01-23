@@ -9,7 +9,8 @@
 #include "donofflib/ddevice.h"
 #include "mbmb/mbpublish.h"
 #include "dboot/dbootmodbus.h"
-#include "mbmb/mbmbregs-random.h"
+#include "mbmb/mbmbregsa.h"
+#include "dmbsensor/mbsensor-random.h"
 
 
 #define DEBUG 1
@@ -57,7 +58,8 @@ DProg dprogramm;
 
 DPublisherMqtt* publisher_mqtt;
 DDevice* mb_dev;
-MBRegsRandom* mb_regs;
+MBRegsA* mb_regs;
+modbus_sensor_random* mbsensor;
 
 //void callback(char* topic, byte* payload, unsigned int length);
 Queue<pub_events> que_wanted= Queue<pub_events>(MAX_QUEUE_WANTED);
@@ -186,7 +188,9 @@ void setup() {
   mbus_obj.begin(&Serial);  //указание порта для модбас
   mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
 
-  mb_regs=new MBRegsRandom(_s,&mbus_obj,10,10);
+  mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
+
+  mb_regs=new MBRegsA(_s,&mbus_obj,mbsensor);
   mb_regs->init();
 
   
@@ -209,6 +213,7 @@ void loop() {
   
   //yield();   // отпускаем для обработки Wi-Fi
   if(softTimer<(millis())) {
+     mbsensor->sensor_loop();
      mb_regs->update_regs(); // обновляем регистры по таймеру softTimer= millis() + 500;
      digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
      softTimer=millis()+500;

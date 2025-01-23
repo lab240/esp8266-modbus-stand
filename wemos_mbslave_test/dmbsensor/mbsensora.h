@@ -16,19 +16,23 @@ protected:
     std::vector<input_register_t> input_registers; // Vector of input registers
     std::vector<coil_t> coils;            // Vector of coil registers
     int main_register_index;         // Index of the main register
-    int baud_rate;                        // Communication baud rate
-    int port;                             // Port number
 
 public:
     // Constructor: Initializes the device with the given parameters
-    modbus_sensor(int id, int num_input_registers, int num_coils, int baud_rate, int port, int main_register_index)
-        : device_id(id), input_registers(num_input_registers), coils(num_coils), baud_rate(baud_rate), port(port), main_register_index(main_register_index) {}
+    modbus_sensor(int id, int num_input_registers, int num_coils, int main_register_index)
+        : device_id(id), input_registers(num_input_registers), coils(num_coils), main_register_index(main_register_index) {}
 
-    void sensor_loop(){
-        
-    
+    void virtual sensor_loop(){}
+
+       // Returns the number of input registers
+    size_t get_num_input_registers() const {
+        return input_registers.size();
     }
 
+    // Returns the number of coils
+    size_t get_num_coils() const {
+        return coils.size();
+    }
 
     // Reads the value of an input register by its index
     uint16_t read_input_register(int index) {
