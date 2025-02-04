@@ -25,11 +25,13 @@ class MBRegsA: public DBase {
 
     void init() {
 
-        hregs_amount=_mbsensor->get_num_input_registers()+1;
-        cregs_amount=_mbsensor->get_num_coils()+1;
+        hregs_amount=_mbsensor->get_num_input_registers();
+        cregs_amount=_mbsensor->get_num_coils();
 
         init_hold_regs();
         init_coil_regs();
+
+        debug("MBRREGS", "Hold regs="+String(hregs_amount)+"; Coil regs="+String(cregs_amount));
 
         init_ok = 1;
     };
@@ -42,17 +44,25 @@ class MBRegsA: public DBase {
 
         _mb->Hreg(0,_s-> mb_modbus_address);
 
-        _mbsensor->sensor_loop();
+        //_mbsensor->sensor_loop();
 
         for(int h_reg=1; h_reg< hregs_amount; h_reg++){
             _mb->Hreg(h_reg,_mbsensor->read_input_register(h_reg));
         }
 
-        for(int c_reg=1; c_reg< cregs_amount; c_reg++){
+        for(int c_reg=0; c_reg< cregs_amount; ++c_reg){
             _mb->Hreg(c_reg,_mbsensor->read_coil(c_reg));
         }
 
     };
+
+    void virtual print_hold_regs(){
+        String sregs="";
+        for(int h_reg=0; h_reg< hregs_amount; h_reg++){
+            sregs+="|"+String(h_reg)+"="+String(_mbsensor->read_input_register(h_reg));
+        }
+        debug("MBREGS", "REGSH="+sregs);
+    }
 
     void virtual init_hold_regs(){
         for(int h_reg=0; h_reg<=hregs_amount; h_reg++){

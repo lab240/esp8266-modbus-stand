@@ -4,7 +4,7 @@
 
 #include "../donofflib/dbase.h"
 
-#define DEFAULT_NUM_TRYES 10   //waiting command pause
+#define DEFAULT_NUM_TRYES 3   //waiting command pause
 
 class DBootA : public DBase
 {

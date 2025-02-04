@@ -37,7 +37,7 @@ public:
     // Reads the value of an input register by its index
     uint16_t read_input_register(int index) {
         if (index < 0 || index >= input_registers.size()) {
-            Serial.println("Error: Invalid input register index.");
+            Serial.println("Error Read: Invalid input register index.");
             return 0;
         }
         return input_registers[index].value;
@@ -46,7 +46,7 @@ public:
     // Writes a value to an input register by its index
     void write_input_register(int index, uint16_t value) {
         if (index < 0 || index >= input_registers.size()) {
-            Serial.println("Error: Invalid input register index.");
+            Serial.println("Error Write: Invalid input register index.");
             return;
         }
         input_registers[index].value = value;
@@ -55,7 +55,7 @@ public:
     // Reads the state of a coil by its index
     bool read_coil(int index) {
         if (index < 0 || index >= coils.size()) {
-            Serial.println("Error: Invalid coil index.");
+            Serial.println("Error Read: Invalid coil index.");
             return false;
         }
         return coils[index].state;
@@ -64,7 +64,7 @@ public:
     // Writes a state to a coil by its index
     void write_coil(int index, bool state) {
         if (index < 0 || index >= coils.size()) {
-            Serial.println("Error: Invalid coil index.");
+            Serial.println("Error Write: Invalid coil index.");
             return;
         }
         coils[index].state = state;

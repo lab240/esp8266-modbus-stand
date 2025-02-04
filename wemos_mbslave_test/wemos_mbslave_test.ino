@@ -16,7 +16,8 @@
 #define DEBUG 1
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
-#define SWAPSERIAL 1
+#define SWAPSERIAL 0
+#define SILENT 1
 
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
@@ -159,17 +160,7 @@ void setup() {
     ticker.attach(0.25,tickf);
   }
   
-  dprogramm.debug(DSMAIN, "-------------------------------------");
-  dprogramm.debug(DSMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
-  dprogramm.debug(DSMAIN, "-------------------------------------");
-  
-  // All classes turn to silent mode of printing to serial
-  if(SWAPSERIAL==1){
-    mb_dev->enable_silent();
-    dprogramm.enable_silent();
-    delay(200); 
-  }
-  
+   
   Serial.println("Switch all classes to silent mode");
 
   //wait for sending to serial
@@ -181,8 +172,28 @@ void setup() {
   //Power MAX485 board
   digitalWrite(POWER_PIN, HIGH);
 
-  //Swap hardware serial to D7,D8
-  if(SWAPSERIAL) Serial.swap();
+  
+
+   // All classes turn to silent mode of printing to serial
+  if(SWAPSERIAL==1){
+    //Swap hardware serial to D7,D8
+    Serial.swap();
+
+    dprogramm.debug(DSMAIN, "-------------------------------------");
+    dprogramm.debug(DSMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
+    dprogramm.debug(DSMAIN, "-------------------------------------");
+  }else{
+    dprogramm.debug(DSMAIN, "-------------------------------------");
+    dprogramm.debug(DSMAIN, "We are using standart RX-TX pins. Finish all serial input/output operations");
+    dprogramm.debug(DSMAIN, "-------------------------------------");
+  }
+
+  if(SILENT){
+    mb_dev->enable_silent();
+    dprogramm.enable_silent();
+    delay(200);
+
+  }
 
   
   mbus_obj.begin(&Serial);  //указание порта для модбас
@@ -192,6 +203,11 @@ void setup() {
 
   mb_regs=new MBRegsA(_s,&mbus_obj,mbsensor);
   mb_regs->init();
+
+  if(SILENT){
+    mb_regs->enable_silent();
+    delay(200);
+  }
 
   
   dprogramm.debug(DSMAIN,"Modbus init regs... enabled");
@@ -215,6 +231,7 @@ void loop() {
   if(softTimer<(millis())) {
      mbsensor->sensor_loop();
      mb_regs->update_regs(); // обновляем регистры по таймеру softTimer= millis() + 500;
+     mb_regs->print_hold_regs();
      digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
      softTimer=millis()+500;
   }
