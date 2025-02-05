@@ -44,7 +44,7 @@
 
 SerialConfig serial_settings=DEFAULT_MB_FC;
 
-ModbusRTU mbus_obj;                
+ModbusRTU * mbus_obj;                
 
 Ticker ticker;
 
@@ -84,57 +84,29 @@ void callback(char* topic, byte* payload, unsigned int length){
 void setup() {
 
   Serial.begin(115200, SERIAL_8N1);  
-  delay(1000);
 
+  delay(1000);
   Serial.println("************ Starting Modbus Emulator 0.1b ********************");
-
   delay(1000);
-  
+
+   
   //init espboot
   _s=new(WMSettings);
+    
+  /**************  DBoot section ************************/
 
-    Serial.println("************ Starting DBOOT ********************");
+  Serial.println("************ Starting DBOOT ********************");
   
   dboot=new DBootEspMqttModbus(_s);
-
-  // Serial.println("************ Starting DBOOT\INIT ********************");
-  dboot->init();
-  dboot->print_curr_settings();
-  
-  mb_dev=new DDevice(_s); 
-  
-  if(MQTT_ENABLE){
-
-    publisher_mqtt=new DPublisherMqttMBstand(_s, nullptr, 0);
-    publisher_mqtt->init(&que_wanted);
-    mb_dev->init(publisher_mqtt, &que_wanted);
-  }else{
-    dprogramm.debug(DSMAIN,"Init mb_dev with NO MQTT MODE");
-    mb_dev->init(nullptr,nullptr);
-  }
-
-
-  led_mode_setup =1;
-
-  pinMode(LED_DATA, OUTPUT);
-  pinMode(LED_DATA2, OUTPUT);
-  pinMode(POWER_PIN, OUTPUT);
-
-  ticker.attach(0.25,tickf);
- 
-  if(WIFI_ENABLE){
-    dprogramm.debug(DSMAIN, "Init wifi settings");
-    WiFi.persistent(false);
-    WiFi.mode(WIFI_STA);
-    WiFi.setAutoReconnect(true);
-  }
   
   dprogramm.debug(DSMAIN, "-------------- Welcome  ------------------------------------------------------------------------");
 
-  // инициализируем уарт с параметрами стандартного монитора порта
+  dboot->init();
 
   dprogramm.debug(DSENTER,0);
+
   dboot->print_welcome_help();
+  dboot->print_curr_settings();
  
   dprogramm.debug(DSMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
   dprogramm.debug(DSENTER,0);
@@ -151,7 +123,17 @@ void setup() {
 
   delete(dboot);
 
+  /************ end dboot ********************* */
 
+ /*****************Wifi start if enabled  ******************/
+
+  if(WIFI_ENABLE){
+    dprogramm.debug(DSMAIN, "Init wifi settings");
+    WiFi.persistent(false);
+    WiFi.mode(WIFI_STA);
+    WiFi.setAutoReconnect(true);
+  }
+  
   if(WIFI_ENABLE){
     ticker.attach(0.15,tickf);
     struct station_config stationConf;
@@ -162,8 +144,17 @@ void setup() {
     ticker.attach(0.25,tickf);
   }
 
+/************************************************************/
+
+  led_mode_setup =1;
+
+  pinMode(LED_DATA, OUTPUT);
+  pinMode(LED_DATA2, OUTPUT);
   pinMode(POWER_PIN, OUTPUT);
-  
+
+  ticker.attach(0.25,tickf);
+
+ /************* Serial change from debug to hatdware ************************* */  
   if(SWAPSERIAL==1){
     //Swap hardware serial to D7,D8    
     dprogramm.debug(DSMAIN, "Swap Serial to D7-D8");
@@ -177,36 +168,39 @@ void setup() {
     Serial.flush(); 
     delay(200);
   }
-
   //Serial.end();   // Остановить текущий Serial
   Serial.begin( _s->mb_serial_baudrate, serial_settings);  
   //Serial.setDebugOutput(false); 
 
-  if(SILENT_DEBUG_MODE){
-    mb_dev->enable_silent();
-    dprogramm.enable_silent();
-  }
+  /***************************************************************************** */
 
-  mbus_obj.begin(&Serial);  //указание порта для модбас
-  mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
+  /**** Create modbus object  ***/
 
+  mbus_obj=new(ModbusRTU);
+  mbus_obj->begin(&Serial);  //указание порта для модбас
+  mbus_obj->slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
+  mbus_obj->onGetHreg(0,cbReadHreg,_s->mb_intregs_amount);
+
+  //**************** */
+
+  //Create modbus sensor
   mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
+  mbsensor->init();
 
-  mb_regs=new MBRegsA(_s,&mbus_obj,mbsensor);
-
-  if(SILENT_DEBUG_MODE){
-    mb_regs->enable_silent();
-  }
-
+  mb_regs=new MBRegsA(_s,mbus_obj,mbsensor);
   mb_regs->init();
-
   
-  dprogramm.debug(DSMAIN,"Modbus init regs... enabled");
-
-//callback when request comes
-  mbus_obj.onGetHreg(0,cbReadHreg,_s->mb_intregs_amount);
-
-  dprogramm.debug(DSMAIN,"Callback fot modbus regs... enabled");
+  //Create modbus device object (modbus object, modbus sensor should be created before)
+  mb_dev=new DDevice(_s); 
+  
+  if(MQTT_ENABLE){
+    publisher_mqtt=new DPublisherMqttMBstand(_s, nullptr, 0);
+    publisher_mqtt->init(&que_wanted);
+    mb_dev->init(publisher_mqtt, &que_wanted);
+  }else{
+    dprogramm.debug(DSMAIN,"Init mb_dev with NO MQTT MODE");
+    mb_dev->init(nullptr,nullptr);
+  }
 
   led_mode_setup=0; //finish setup blinking
 }
@@ -214,7 +208,7 @@ void setup() {
 void loop() {
 
   //digitalWrite(LED_DATA2, HIGH);
-  mbus_obj.task(); // слушаем модбас
+  mbus_obj->task(); // слушаем модбас
   //if (client.connected()) client.loop();
   mb_dev->supply_loop();
   

@@ -1,63 +1,40 @@
-#ifndef donoffsupply_h
-#define donoffsupply_h
+#ifndef donoffsupply_mb_h
+#define donoffsupply_mb_h
 
 #include <queue.h>
-#include "dpublishmqtt.h"
+#include "ddevice.h"
+#include "../dmbsensor/mbsensora.h"
+#include <ModbusRTU.h>
 
 //#include "dqueue.h"
 
-#define DEVICE_VERBOSE 1
-
-
-#define MAX_LOOPS 10
-#define MAX_SENSORS 10
-#define MAX_LOOP_COUNTER 30
-#define MS_LOOP_TIMING 200
-#define MAX_SLOW_LOOP_COUNTER 600
-
-#define DSDEVICE "DDEVICE" 
-
-class DDevice: public DBase {
-  private:
-  
+class DMBDevice: public DDevice {
+  private:  
     
- protected:
+  protected:
 
-    uint mqtt_enabled=1;
+    modbus_sensor* _mb;
+    ModbusRTU* _mbus_obj;   
+    uint mb_hregs_amount;
+    uint mb_cregs_amount;
 
-    String reasonStr = "";
-    uint8_t  blink_loop = 0;
-    uint current_blink_type = 0;
-
-
-    int numrelays = 0;
-   
-    uint mycounter = 0;
-    uint mycounter2=0;
-    ulong mytimer = 0;
-    int init_ok = 0;
-    int m_just_synced=0;
-    pub_events what_to_want;
-
-    Queue<pub_events>* que_wanted;
-    
-    DPublisherMqtt* pub;
-   
   public:
-    DDevice(WMSettings * __s): DBase(__s) {};
 
-    void init(DPublisherMqtt* _pub, Queue<pub_events>* _q) {
+    DMBDevice(WMSettings * __s): DDevice(__s) {};
 
-      pub = _pub;
-      que_wanted=_q;
-      mytimer = millis();
+    void init(DPublisherMqtt* _pub, Queue<pub_events>* _q, mobus_sensor __mbsensor, ModbusRTU* __mbus_obj ) override {
 
-      if(pub==nullptr){
-        debug(DSDEVICE,"NO MQTT MODE");
-        mqtt_enabled=0;
-      } 
-      
-      init_ok = 1;
+      DDevice::init(_pub,_q);
+
+      mb_hregs_amount=_mbsensor->get_num_hold_registers();
+      mb_cregs_amount=_mbsensor->get_num_coils();
+
+      mb_init_hold_regs();
+      mb_init_coil_regs();
+
+      init_ok=0;
+
+
 
     };
 
