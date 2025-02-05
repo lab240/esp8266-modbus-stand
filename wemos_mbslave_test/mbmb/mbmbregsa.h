@@ -31,7 +31,7 @@ class MBRegsA: public DBase {
         init_hold_regs();
         init_coil_regs();
 
-        debug("MBRREGS", "Hold regs="+String(hregs_amount)+"; Coil regs="+String(cregs_amount));
+        // debug("MBRREGS", "Hold regs="+String(hregs_amount)+"; Coil regs="+String(cregs_amount));
 
         init_ok = 1;
     };
@@ -65,18 +65,22 @@ class MBRegsA: public DBase {
     }
 
     void virtual init_hold_regs(){
+       
         for(int h_reg=0; h_reg<=hregs_amount; h_reg++){
             _mb->addHreg(h_reg); //add register
             _mb->Hreg(h_reg,0);  //add 0 to each reg
         }
+        debug("MBREGS", "Iinit hregs->"+String(hregs_amount));
     };
 
 
     void virtual init_coil_regs(){
+       
         for(int c_reg=0; c_reg<=cregs_amount; c_reg++){
             _mb->addCoil(c_reg); //add register
             _mb->Coil(c_reg,0);  //add 0 to each reg
         }
+        debug("MBREGS", "Iinit coils->"+String(cregs_amount));
     };
 };
 

@@ -16,8 +16,8 @@
 #define DEBUG 1
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
-#define SWAPSERIAL 0
-#define SILENT 1
+#define SWAPSERIAL 1
+#define SILENT_DEBUG_MODE 1
 
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
@@ -82,6 +82,7 @@ void callback(char* topic, byte* payload, unsigned int length){
 */
 
 void setup() {
+
   Serial.begin(115200, SERIAL_8N1);  
   delay(1000);
 
@@ -117,6 +118,7 @@ void setup() {
 
   pinMode(LED_DATA, OUTPUT);
   pinMode(LED_DATA2, OUTPUT);
+  pinMode(POWER_PIN, OUTPUT);
 
   ticker.attach(0.25,tickf);
  
@@ -159,55 +161,44 @@ void setup() {
     dprogramm.mywifi_try_to_connect();
     ticker.attach(0.25,tickf);
   }
-  
-   
-  Serial.println("Switch all classes to silent mode");
 
-  //wait for sending to serial
-  
-  //init Serial port with modbus settings
-  Serial.begin( _s->mb_serial_baudrate, serial_settings); 
   pinMode(POWER_PIN, OUTPUT);
   
-  //Power MAX485 board
-  digitalWrite(POWER_PIN, HIGH);
-
-  
-
-   // All classes turn to silent mode of printing to serial
   if(SWAPSERIAL==1){
-    //Swap hardware serial to D7,D8
+    //Swap hardware serial to D7,D8    
+    dprogramm.debug(DSMAIN, "Swap Serial to D7-D8");
+    dprogramm.debug(DSMAIN, "Setting silent mode, bye bye console ");
+    Serial.flush(); 
+    delay(200);
     Serial.swap();
-
-    dprogramm.debug(DSMAIN, "-------------------------------------");
-    dprogramm.debug(DSMAIN, "Switching Serial port to hardware mode, finish serial input/output operations");
-    dprogramm.debug(DSMAIN, "-------------------------------------");
+    
   }else{
-    dprogramm.debug(DSMAIN, "-------------------------------------");
-    dprogramm.debug(DSMAIN, "We are using standart RX-TX pins. Finish all serial input/output operations");
-    dprogramm.debug(DSMAIN, "-------------------------------------");
+    dprogramm.debug(DSMAIN, "NO Swap serial");
+    Serial.flush(); 
+    delay(200);
   }
 
-  if(SILENT){
+  //Serial.end();   // Остановить текущий Serial
+  Serial.begin( _s->mb_serial_baudrate, serial_settings);  
+  //Serial.setDebugOutput(false); 
+
+  if(SILENT_DEBUG_MODE){
     mb_dev->enable_silent();
     dprogramm.enable_silent();
-    delay(200);
-
   }
 
-  
   mbus_obj.begin(&Serial);  //указание порта для модбас
   mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
 
   mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
 
   mb_regs=new MBRegsA(_s,&mbus_obj,mbsensor);
-  mb_regs->init();
 
-  if(SILENT){
+  if(SILENT_DEBUG_MODE){
     mb_regs->enable_silent();
-    delay(200);
   }
+
+  mb_regs->init();
 
   
   dprogramm.debug(DSMAIN,"Modbus init regs... enabled");
@@ -231,7 +222,7 @@ void loop() {
   if(softTimer<(millis())) {
      mbsensor->sensor_loop();
      mb_regs->update_regs(); // обновляем регистры по таймеру softTimer= millis() + 500;
-     mb_regs->print_hold_regs();
+     //mb_regs->print_hold_regs();
      digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
      softTimer=millis()+500;
   }
