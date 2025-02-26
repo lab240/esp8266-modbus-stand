@@ -46,12 +46,12 @@ class MBRegsA: public DBase {
 
         //_mbsensor->sensor_loop();
 
-        for(int h_reg=1; h_reg< hregs_amount; h_reg++){
-            _mb->Hreg(h_reg,_mbsensor->read_input_register(h_reg));
+        for(int h_reg=0; h_reg< hregs_amount; h_reg++){
+            _mb->Hreg(h_reg+1,_mbsensor->read_input_register(h_reg));
         }
 
         for(int c_reg=0; c_reg< cregs_amount; ++c_reg){
-            _mb->Hreg(c_reg,_mbsensor->read_coil(c_reg));
+            _mb->Coil(c_reg,_mbsensor->read_coil(c_reg));
         }
 
     };

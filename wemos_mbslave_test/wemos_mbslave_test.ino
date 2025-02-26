@@ -163,24 +163,36 @@ void setup() {
   }
 
   pinMode(POWER_PIN, OUTPUT);
+
+
+  dprogramm.debug(DSMAIN, "Run new Serial.begin");
+
+  //Serial.end();   // Остановить текущий Serial
+  
+  //Serial.setDebugOutput(false); 
+
+  dprogramm.debug(DSMAIN, "Write HIGH to enable RS485");
+
+  //Power relay to enable RS485 RX\TX
+  digitalWrite(POWER_PIN,HIGH);
   
   if(SWAPSERIAL==1){
     //Swap hardware serial to D7,D8    
     dprogramm.debug(DSMAIN, "Swap Serial to D7-D8");
     dprogramm.debug(DSMAIN, "Setting silent mode, bye bye console ");
-    Serial.flush(); 
+    Serial.flush();
     delay(200);
-    Serial.swap();
-    
+    Serial.begin( _s->mb_serial_baudrate, serial_settings);  
+    digitalWrite(POWER_PIN,HIGH);
+    Serial.swap();    
   }else{
     dprogramm.debug(DSMAIN, "NO Swap serial");
-    Serial.flush(); 
+    Serial.flush();
+    Serial.end();
     delay(200);
+    Serial.begin( _s->mb_serial_baudrate, serial_settings);  
+    digitalWrite(POWER_PIN,HIGH);
   }
-
-  //Serial.end();   // Остановить текущий Serial
-  Serial.begin( _s->mb_serial_baudrate, serial_settings);  
-  //Serial.setDebugOutput(false); 
 
   if(SILENT_DEBUG_MODE){
     mb_dev->enable_silent();

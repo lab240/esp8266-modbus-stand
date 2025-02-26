@@ -1,8 +1,11 @@
 #ifndef dmbsensorrandom
 #define dmbsensorrandom
-#include <cstdlib> // For random numbers
-#include <ctime>   // For seeding the random number generator
+#include <Arduino.h>
 #include "mbsensora.h"
+
+#include <ESP8266TrueRandom.h>
+
+
 
 class modbus_sensor_random : public modbus_sensor {
 public:
@@ -10,14 +13,17 @@ public:
     modbus_sensor_random(int id, int num_input_registers, int num_coils, int main_register_index)
         : modbus_sensor(id, num_input_registers, num_coils, main_register_index) {
         // Seed the random number generator
-        srand(time(NULL));
+         randomSeed(millis());
     }
 
     // Override the sensor_loop to populate registers with random values
     void sensor_loop() override {
-        // Update each input register with a random value
+         // Update each input register with a random value
         for (size_t i = 0; i < input_registers.size(); ++i) {
-            input_registers[i].value = rand() % 65536; // Random 16-bit value
+            input_registers[i].value =random(1,32000); // Random 16-bit value
+
+            //We can library
+            //input_registers[i].value = ESP8266TrueRandom.random(32000); // Random 16-bit value
         }
         // Update each coil with a random state (true/false)
         for (size_t i = 0; i < coils.size(); ++i) {
