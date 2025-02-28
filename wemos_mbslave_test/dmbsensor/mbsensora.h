@@ -1,10 +1,13 @@
 #ifndef dmbsensora
 #define dmbsensora
 
+//#include <cstddef.hpp>
+//#include <stddef.h>
+
 // Base class ModbusSensor without MQTT
-class modbus_sensor {
+class modbus_sensor: public DProg{
 protected:
-    struct input_register_t {
+    struct hold_register_t {
         uint16_t value; // Value of the input register
     };
 
@@ -13,20 +16,20 @@ protected:
     };
 
     int device_id;                        // Device identifier
-    std::vector<input_register_t> input_registers; // Vector of input registers
+    std::vector<hold_register_t> hold_registers; // Vector of input registers
     std::vector<coil_t> coils;            // Vector of coil registers
     int main_register_index;         // Index of the main register
 
 public:
     // Constructor: Initializes the device with the given parameters
-    modbus_sensor(int id, int num_input_registers, int num_coils, int main_register_index)
-        : device_id(id), input_registers(num_input_registers), coils(num_coils), main_register_index(main_register_index) {}
+    modbus_sensor(int id, int num_hold_registers, int num_coils, int main_register_index)
+        : device_id(id), hold_registers(num_hold_registers), coils(num_coils), main_register_index(main_register_index) {}
 
-    void virtual sensor_loop(){}
+    void virtual sensor_loop()=0;
 
        // Returns the number of input registers
-    size_t get_num_input_registers() const {
-        return input_registers.size();
+    size_t get_num_hold_registers() const {
+        return hold_registers.size();
     }
 
     // Returns the number of coils
@@ -35,21 +38,21 @@ public:
     }
 
     // Reads the value of an input register by its index
-    uint16_t read_input_register(int index) {
-        if (index < 0 || index >= input_registers.size()) {
+    uint16_t read_hold_register(int index) {
+        if (index < 0 || index >= hold_registers.size()) {
             Serial.println("Error Read: Invalid input register index.");
             return 0;
         }
-        return input_registers[index].value;
+        return hold_registers[index].value;
     }
 
     // Writes a value to an input register by its index
-    void write_input_register(int index, uint16_t value) {
-        if (index < 0 || index >= input_registers.size()) {
+    void write_hold_register(int index, uint16_t value) {
+        if (index < 0 || index >= hold_registers.size()) {
             Serial.println("Error Write: Invalid input register index.");
             return;
         }
-        input_registers[index].value = value;
+        hold_registers[index].value = value;
     }
 
     // Reads the state of a coil by its index
@@ -77,8 +80,8 @@ public:
 
     // Returns the value of the main register
     uint16_t get_value() const {
-        if (main_register_index >= 0 && main_register_index < input_registers.size()) {
-            return input_registers[main_register_index].value;
+        if (main_register_index >= 0 && main_register_index < hold_registers.size()) {
+            return hold_registers[main_register_index].value;
         } else {
             Serial.println("Error: Invalid main register index.");
             return 0;

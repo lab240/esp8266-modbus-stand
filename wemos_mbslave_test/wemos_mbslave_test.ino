@@ -11,6 +11,7 @@
 #include "dboot/dbootmodbus.h"
 #include "mbmb/mbmbregsa.h"
 #include "dmbsensor/mbsensor-random.h"
+#include "dmbsensor/mbsensor-ds1820.h"
 
 
 #define DEBUG 1
@@ -203,6 +204,7 @@ void setup() {
   mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
 
   mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
+  modbus_sensor_ds1820* ds1820sensor=new modbus_sensor_ds1820(_s->mb_modbus_address+1);
 
   mb_regs=new MBRegsA(_s,&mbus_obj,mbsensor);
 
@@ -248,5 +250,4 @@ void tickf(){
     digitalWrite(LED_DATA, LOW);
   }
 }
-
 

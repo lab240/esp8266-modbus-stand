@@ -25,7 +25,7 @@ class MBRegsA: public DBase {
 
     void init() {
 
-        hregs_amount=_mbsensor->get_num_input_registers();
+        hregs_amount=_mbsensor->get_num_hold_registers();
         cregs_amount=_mbsensor->get_num_coils();
 
         init_hold_regs();
@@ -47,7 +47,7 @@ class MBRegsA: public DBase {
         //_mbsensor->sensor_loop();
 
         for(int h_reg=0; h_reg< hregs_amount; h_reg++){
-            _mb->Hreg(h_reg+1,_mbsensor->read_input_register(h_reg));
+            _mb->Hreg(h_reg+1,_mbsensor->read_hold_register(h_reg));
         }
 
         for(int c_reg=0; c_reg< cregs_amount; ++c_reg){
@@ -59,7 +59,7 @@ class MBRegsA: public DBase {
     void virtual print_hold_regs(){
         String sregs="";
         for(int h_reg=0; h_reg< hregs_amount; h_reg++){
-            sregs+="|"+String(h_reg)+"="+String(_mbsensor->read_input_register(h_reg));
+            sregs+="|"+String(h_reg)+"="+String(_mbsensor->read_hold_register(h_reg));
         }
         debug("MBREGS", "REGSH="+sregs);
     }
