@@ -243,6 +243,7 @@ void setup() {
   led_mode_setup=0; //finish setup blinking
 }
 
+// loop withoot modbus, only sensor check
 /*
 void loop(){
  if(softTimer<(millis())) {
