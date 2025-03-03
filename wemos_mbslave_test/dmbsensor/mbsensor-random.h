@@ -14,12 +14,15 @@ public:
         : modbus_sensor(id, num_hold_registers, num_coils, main_register_index) {
         // Seed the random number generator
          randomSeed(millis());
+
+        hold_registers[1].value=RANDOM_SENSOR_8H_10C; 
+
     }
 
     // Override the sensor_loop to populate registers with random values
     void sensor_loop() override {
          // Update each input register with a random value
-        for (size_t i = 0; i < hold_registers.size(); ++i) {
+        for (size_t i = 2; i < hold_registers.size(); ++i) {
             hold_registers[i].value =random(1,32000); // Random 16-bit value
 
             //We can library

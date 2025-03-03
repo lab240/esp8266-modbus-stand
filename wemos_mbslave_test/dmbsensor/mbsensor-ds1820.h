@@ -19,7 +19,6 @@ protected:
 
 //Sensor porops    
 
-    uint  TYPE=TEMPERATURE_SENSOR;
     long  NO_SENSOR_VAL = -12700;
     long  NOT_READY_VAL = -12800;
     ulong START_DELAY = 0;
@@ -39,6 +38,8 @@ public:
     //id, num_hold_registers, num_coils, main_register
     modbus_sensor_ds1820(int id) :modbus_sensor(id, 4, 0, 3) {
         // Seed the ds1820
+    
+    hold_registers[1].value=TEMPERATURE_SENSOR;
     oneWire = new OneWire(DS1820_PIN);
     ds_sensor = new DallasTemperature(oneWire);
 
@@ -54,8 +55,8 @@ public:
 
       debug("DS1820", "DS1820 dallas sensor ok");
 
-      hold_registers[0].value=device_id;
-      hold_registers[1].value=TYPE;
+    
+      
 
       init_ok=1;
 

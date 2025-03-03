@@ -14,6 +14,8 @@ enum pub_events {
 };
 
 enum sensor_types { 
+ UNDEF_SENSOR_TYPE,
+ RANDOM_SENSOR_8H_10C,
  TEMPERATURE_SENSOR
  };
 

@@ -23,9 +23,16 @@ protected:
 public:
     // Constructor: Initializes the device with the given parameters
     modbus_sensor(int id, int num_hold_registers, int num_coils, int main_register_index)
-        : device_id(id), hold_registers(num_hold_registers), coils(num_coils), main_register_index(main_register_index) {}
+        : device_id(id), hold_registers(num_hold_registers), coils(num_coils), main_register_index(main_register_index) {
+         //register 1 - getAddress (id)
+         //register 2 - sensor type
+         hold_registers[0].value=device_id;
+         hold_registers[1].value=UNDEF_SENSOR_TYPE;
+        }
 
     void virtual sensor_loop()=0;
+
+     void virtual init() {};
 
        // Returns the number of input registers
     size_t get_num_hold_registers() const {

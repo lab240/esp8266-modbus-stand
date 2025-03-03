@@ -20,6 +20,8 @@
 #define SWAPSERIAL 1
 #define SILENT_SERIAL_MODE 1
 
+#define DS1820_SENSOR_PRESENTS
+
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
 
@@ -61,8 +63,8 @@ DProg dprogramm;
 DPublisherMqtt* publisher_mqtt;
 DDevice* mb_dev;
 MBRegsA* mb_regs;
-modbus_sensor_random* mbsensor;
-modbus_sensor_ds1820* ds1820sensor;
+modbus_sensor* mbsensor;
+//modbus_sensor_ds1820* ds1820sensor;
 
 //void callback(char* topic, byte* payload, unsigned int length);
 Queue<pub_events> que_wanted= Queue<pub_events>(MAX_QUEUE_WANTED);
@@ -209,16 +211,19 @@ void setup() {
 
    dprogramm.debug(DSMAIN, "Starting sensor ds1820");
 
-   // mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
-  ds1820sensor=new modbus_sensor_ds1820(_s->mb_modbus_address);
+   #ifdef DS1820_SENSOR_PRESENTS
+     mbsensor=new modbus_sensor_ds1820(_s->mb_modbus_address);
+   #else
+     mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
+   #endif
 
   dprogramm.debug(DSMAIN, "sensor create done");
 
-  ds1820sensor->init();
+  mbsensor->init();
 
   dprogramm.debug(DSMAIN, "sensor init done");
 
-  mb_regs=new MBRegsA(_s,&mbus_obj,ds1820sensor);
+  mb_regs=new MBRegsA(_s,&mbus_obj,mbsensor);
 
   if(SILENT_SERIAL_MODE){
     mb_regs->enable_silent();
@@ -260,7 +265,7 @@ void loop() {
   
   //yield();   // отпускаем для обработки Wi-Fi
   if(softTimer<(millis())) {
-     ds1820sensor->sensor_loop();
+     mbsensor->sensor_loop();
      mb_regs->update_regs(); // обновляем регистры по таймеру softTimer= millis() + 500;
      //mb_regs->print_hold_regs();
      digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
