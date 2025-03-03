@@ -18,7 +18,7 @@
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
 #define SWAPSERIAL 1
-#define SILENT_DEBUG_MODE 1
+#define SILENT_SERIAL_MODE 1
 
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
@@ -62,6 +62,7 @@ DPublisherMqtt* publisher_mqtt;
 DDevice* mb_dev;
 MBRegsA* mb_regs;
 modbus_sensor_random* mbsensor;
+modbus_sensor_ds1820* ds1820sensor;
 
 //void callback(char* topic, byte* payload, unsigned int length);
 Queue<pub_events> que_wanted= Queue<pub_events>(MAX_QUEUE_WANTED);
@@ -188,27 +189,38 @@ void setup() {
     Serial.swap();    
   }else{
     dprogramm.debug(DSMAIN, "NO Swap serial");
-    Serial.flush();
-    Serial.end();
-    delay(200);
-    Serial.begin( _s->mb_serial_baudrate, serial_settings);  
+   
+    if(SILENT_SERIAL_MODE){
+      Serial.flush();
+      Serial.end();
+      delay(200);
+      Serial.begin( _s->mb_serial_baudrate, serial_settings);  
+    }
     digitalWrite(POWER_PIN,HIGH);
   }
 
-  if(SILENT_DEBUG_MODE){
+  if(SILENT_SERIAL_MODE){
     mb_dev->enable_silent();
     dprogramm.enable_silent();
-  }
+   }
 
   mbus_obj.begin(&Serial);  //указание порта для модбас
   mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
 
-  mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
-  modbus_sensor_ds1820* ds1820sensor=new modbus_sensor_ds1820(_s->mb_modbus_address+1);
+   dprogramm.debug(DSMAIN, "Starting sensor ds1820");
 
-  mb_regs=new MBRegsA(_s,&mbus_obj,mbsensor);
+   // mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
+  ds1820sensor=new modbus_sensor_ds1820(_s->mb_modbus_address);
 
-  if(SILENT_DEBUG_MODE){
+  dprogramm.debug(DSMAIN, "sensor create done");
+
+  ds1820sensor->init();
+
+  dprogramm.debug(DSMAIN, "sensor init done");
+
+  mb_regs=new MBRegsA(_s,&mbus_obj,ds1820sensor);
+
+  if(SILENT_SERIAL_MODE){
     mb_regs->enable_silent();
   }
 
@@ -218,12 +230,26 @@ void setup() {
   dprogramm.debug(DSMAIN,"Modbus init regs... enabled");
 
 //callback when request comes
+
   mbus_obj.onGetHreg(0,cbReadHreg,_s->mb_intregs_amount);
 
   dprogramm.debug(DSMAIN,"Callback fot modbus regs... enabled");
 
   led_mode_setup=0; //finish setup blinking
 }
+
+/*
+void loop(){
+ if(softTimer<(millis())) {
+     ds1820sensor->sensor_loop();
+     //mb_regs->update_regs(); // обновляем регистры по таймеру softTimer= millis() + 500;
+     //mb_regs->print_hold_regs();
+     digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
+     softTimer=millis()+500;
+  }
+}
+  
+*/
 
 void loop() {
 
@@ -234,13 +260,14 @@ void loop() {
   
   //yield();   // отпускаем для обработки Wi-Fi
   if(softTimer<(millis())) {
-     mbsensor->sensor_loop();
+     ds1820sensor->sensor_loop();
      mb_regs->update_regs(); // обновляем регистры по таймеру softTimer= millis() + 500;
      //mb_regs->print_hold_regs();
      digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
      softTimer=millis()+500;
   }
 }
+
 
 void tickf(){
   if(led_mode_setup) {

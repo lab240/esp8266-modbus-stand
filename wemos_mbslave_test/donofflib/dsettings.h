@@ -13,6 +13,15 @@ enum pub_events {
  PUBLISHER_WANT_SAY_JUST_SYNCED,
 };
 
+enum sensor_types { 
+ TEMPERATURE_SENSOR
+ };
+
+enum sensor_state { 
+  SENSOR_STATE_OK,
+  SENSOR_STATE_FAIL
+};
+
 
 typedef struct {
   
