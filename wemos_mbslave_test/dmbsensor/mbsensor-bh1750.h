@@ -30,10 +30,11 @@ protected:
 public:
     // Constructor: Pass parameters to the base class constructor
     //id, num_hold_registers, num_coils, main_register
-    modbus_sensor_bh1750(int id) :modbus_sensor(id, 4, 0, 3) {
+    modbus_sensor_bh1750(int id) :modbus_sensor(id, 5, 0, 4) {
       
       //registers[0] is filled in parent constructor
       hold_registers[1].value=LIGTH_SENSOR;
+      hold_registers[2].value=MULTIPLIER;
      
     }
 
@@ -45,7 +46,7 @@ public:
       lightMeter.begin();
       //ds_sensor->setWaitForConversion(false);
 
-      if(DEBUG_BH1750)  debug("BH1750", "DS1820 dallas sensor ok");
+      if(DEBUG_BH1750)  debug("BH1750", "BH1750 sensor ok");
 
       init_ok=1;
 
@@ -77,8 +78,8 @@ public:
       //if minus, convering 
       uint16_t u_test_result=static_cast<uint16_t>(lux_l);
 
-      hold_registers[3].value = u_test_result;
-      if (nosensor_val(lux_l)) hold_registers[2].value=SENSOR_STATE_OK; else hold_registers[2].value=SENSOR_STATE_FAIL;
+      hold_registers[4].value = u_test_result;
+      if (nosensor_val(lux_l)) hold_registers[3].value=SENSOR_STATE_OK; else hold_registers[3].value=SENSOR_STATE_FAIL;
       if(DEBUG_BH1750)  debug("BH1750", "BH1750 signed_val="+String(lux_l)+", unsigned_val="+String(u_test_result)+", "+String(millis()));
     };
         

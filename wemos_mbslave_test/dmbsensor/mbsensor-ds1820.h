@@ -24,6 +24,7 @@ protected:
     ulong START_DELAY = 0;
     uint  MULTIPLIER = 100;     //25.24C we store as 2524
     uint  FAKE_VAL=8500;
+    uint  vector_index=1;
 
 //*****
 
@@ -36,10 +37,12 @@ protected:
 public:
     // Constructor: Pass parameters to the base class constructor
     //id, num_hold_registers, num_coils, main_register
-    modbus_sensor_ds1820(int id) :modbus_sensor(id, 4, 0, 3) {
+    modbus_sensor_ds1820(int id) :modbus_sensor(id, 5, 0, 4) {
         // Seed the ds1820
     
     hold_registers[1].value=TEMPERATURE_SENSOR;
+    hold_registers[2].value=MULTIPLIER;
+
     oneWire = new OneWire(DS1820_PIN);
     ds_sensor = new DallasTemperature(oneWire);
 
@@ -93,9 +96,9 @@ public:
       //if minus, convering 
       uint16_t u_test_result=static_cast<uint16_t>(test_result);
 
-      hold_registers[3].value = u_test_result;
-      if (nosensor_val(test_result) || fake_val(test_result)) hold_registers[2].value=SENSOR_STATE_OK; else hold_registers[2].value=SENSOR_STATE_FAIL;
-      if(DEBUG_DS1820)  debug("DS1820", "DS1820 signed_val="+String(test_result)+", unsigned_val="+String(u_test_result)+", "+String(millis()));
+      hold_registers[4].value = u_test_result;
+      if (nosensor_val(test_result) || fake_val(test_result)) hold_registers[3].value=SENSOR_STATE_OK; else hold_registers[3].value=SENSOR_STATE_FAIL;
+      debug("DS1820", "val="+String(test_result)+", unsigned_val="+String(u_test_result)+", "+String(millis()));
     };
         
 };

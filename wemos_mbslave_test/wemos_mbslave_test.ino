@@ -13,16 +13,25 @@
 #include "dmbsensor/mbsensor-random.h"
 #include "dmbsensor/mbsensor-ds1820.h"
 #include "dmbsensor/mbsensor-bh1750.h"
-
+#include "dmbsensor/mbsensor-bmp280.h"
 
 #define DEBUG 1
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
-#define SWAPSERIAL 1
-#define SILENT_SERIAL_MODE 1
+
+#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+
+#ifdef DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+  #define SWAPSERIAL 0
+  #define SILENT_SERIAL_MODE 0
+#else
+  #define SWAPSERIAL 1
+  #define SILENT_SERIAL_MODE 1
+#endif
 
 //#define DS1820_SENSOR_PRESENTS
-#define BH1750_SENSOR_PRESENTS
+#define BMP280_SENSOR_PRESENTS
+//#define BH1750_SENSOR_PRESENTS
 
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
@@ -217,6 +226,8 @@ void setup() {
      mbsensor=new modbus_sensor_ds1820(_s->mb_modbus_address);
    #elif defined(BH1750_SENSOR_PRESENTS)
      mbsensor=new modbus_sensor_bh1750(_s->mb_modbus_address);
+   #elif defined(BMP280_SENSOR_PRESENTS)
+     mbsensor=new modbus_sensor_bmp280(_s->mb_modbus_address);
    #else
      mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
    #endif
