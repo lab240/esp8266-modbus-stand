@@ -12,6 +12,10 @@
         "string_view": "cpp",
         "initializer_list": "cpp",
         "regex": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "unordered_set": "cpp",
+        "format": "cpp"
     }
 }
