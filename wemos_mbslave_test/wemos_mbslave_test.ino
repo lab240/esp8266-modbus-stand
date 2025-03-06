@@ -19,7 +19,7 @@
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
 
-#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+//#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
 
 #ifdef DEBUG_VERBOSE_MODE_NOMODBUS_OUT
   #define SWAPSERIAL 0
@@ -242,6 +242,7 @@ void setup() {
 
   if(SILENT_SERIAL_MODE){
     mb_regs->enable_silent();
+    mbsensor->enable_silent();
   }
 
   mb_regs->init();

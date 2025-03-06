@@ -8,7 +8,7 @@
 class modbus_sensor: public DProg{
 protected:
     struct hold_register_t {
-        uint16_t value; // Value of the input register
+        int32_t value; // Value of the input register
     };
 
     struct coil_t {

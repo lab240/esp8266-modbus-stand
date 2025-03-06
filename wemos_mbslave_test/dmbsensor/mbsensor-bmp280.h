@@ -29,7 +29,7 @@ protected:
 public:
     // Constructor: Pass parameters to the base class constructor
     //id, num_hold_registers, num_coils, main_register
-    modbus_sensor_bmp280(int id) :modbus_sensor(id, 5, 0, 4) {
+    modbus_sensor_bmp280(int id) :modbus_sensor(id, 9, 0, 5) {
       
       //registers[0] is filled in parent constructor
       hold_registers[1].value=BMP280_SENSOR;
@@ -66,6 +66,9 @@ public:
     // Override the sensor_loop to populate registers with ds1820
 
     void sensor_loop() override {
+      uint16_t high_word;
+      uint16_t low_word;
+
       if(!init_ok) {
         //init didnt run
         if(DEBUG_BMP280)  debug("BMP280", "init run not_ok, cant start sensor loop");
@@ -79,21 +82,33 @@ public:
         // if(DEBUG_BMP280)  debug("BMP280", "SENSOR_STATE_OK");
         hold_registers[3].value=SENSOR_STATE_OK;
         hold_registers[4].value=static_cast<uint16_t>(raw_result*MULTIPLIER);
-        hold_registers[5].value=bmp.readPressure()*MULTIPLIER;
-        hold_registers[6].value=bmp.readAltitude(1013.25)*MULTIPLIER;
+        ulong raw_pressure =(ulong) bmp.readPressure()*MULTIPLIER;
+        high_word = (raw_pressure >> 16) & 0xFFFF;  // hibyte
+        low_word  = raw_pressure & 0xFFFF;          // lowbyte
+/*
+        hold_registers[5].value = (raw_pressure >> 48) & 0xFFFF;  // Самый старший 16-битный блок
+        hold_registers[6].value = (raw_pressure >> 32) & 0xFFFF;
+        hold_registers[7].value = (raw_pressure >> 16) & 0xFFFF;
+        hold_registers[8].value = raw_pressure & 0xFFFF;
+*/
+        hold_registers[5].value=high_word;
+        hold_registers[6].value=low_word;
+
+        //hold_registers[6].value=bmp.readAltitude(1013.25)*MULTIPLIER;
       }else{
         hold_registers[3].value=SENSOR_STATE_FAIL;
         hold_registers[4].value=static_cast<uint16_t>(NO_SENSOR_VAL);
         hold_registers[5].value=static_cast<uint16_t>(NO_SENSOR_VAL);
-        hold_registers[6].value=static_cast<uint16_t>(NO_SENSOR_VAL);
+        hold_registers[6].value=static_cast<uint16_t>(NO_SENSOR_VAL); 
       } 
 
 
 
-     debug("BMP280", "status="+String(hold_registers[3].value)+ \
+     //debug("BMP280", "status="+String(hold_registers[3].value)+ \
                            ", t="+String(hold_registers[4].value)+ \
-                           ", p="+String(hold_registers[5].value)+ \
-                           ", a="+String(hold_registers[5].value)+ \
+                           ", p_hi="+String(hold_registers[5].value)+ \
+                           ", p_low="+String(hold_registers[6].value)+ \
+                           ", p_check="+String(((uint32_t)hold_registers[5].value << 16) | hold_registers[6].value)+ \
                            ", "+String(millis()));
     };
         
