@@ -41,7 +41,7 @@ public:
         // Seed the ds1820
     
     sensor_registers[1].value=TEMPERATURE_SENSOR;
-    sensor_registers[2].value=MULTIPLIER;
+    sensor_registers[3].value=MULTIPLIER;
 
     oneWire = new OneWire(DS1820_PIN);
     ds_sensor = new DallasTemperature(oneWire);
@@ -54,7 +54,7 @@ public:
 
       ds_sensor->begin();
       ds_sensor->getAddress(tempDeviceAddress, 0);
-      //ds_sensor->setWaitForConversion(false);
+      ds_sensor->setWaitForConversion(false);
 
       debug("DS1820", "Sensor ok, main_register_index="+String(main_register_index));
 
@@ -89,7 +89,7 @@ public:
       int raw_result=ds_sensor->getTempC(tempDeviceAddress)*MULTIPLIER;
 
       sensor_registers[4].value = raw_result;
-      if (nosensor_val(raw_result) || fake_val(raw_result)) sensor_registers[3].value=SENSOR_STATE_FAIL; else sensor_registers[3].value=SENSOR_STATE_OK;
+      if (nosensor_val(raw_result) || fake_val(raw_result)) sensor_registers[2].value=SENSOR_STATE_FAIL; else sensor_registers[2].value=SENSOR_STATE_OK;
       if(DEBUG_DS1820) debug("DS1820", "val="+String(raw_result)+", "+String(millis()));
     };
         

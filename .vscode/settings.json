@@ -16,6 +16,7 @@
         "ranges": "cpp",
         "span": "cpp",
         "unordered_set": "cpp",
-        "format": "cpp"
+        "format": "cpp",
+        "cmath": "cpp"
     }
 }

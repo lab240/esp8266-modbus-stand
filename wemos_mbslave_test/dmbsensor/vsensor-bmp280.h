@@ -8,7 +8,9 @@
 
 const uint8_t BMP280_I2C_ADDRESS = 0x76;
 
-#define DEBUG_BMP280 0
+const float APRESSURE=1013.25;
+
+#define DEBUG_BMP280 1
 
 class vector_sensor_bmp280 : public vector_sensor {
 
@@ -18,8 +20,10 @@ protected:
   
 //Sensor porops    
     long  NO_SENSOR_VAL = -12700;
-    uint  MULTIPLIER = 100;     //25.24C we store as 2524
-
+    uint  MULTIPLIER =  100;     //25.24C we store as 2524
+    uint  MULTIPLIER2 = 1;     //25.24C we store as 2524
+    uint  MULTIPLIER3 = 1;     //25.24C we store as 2524
+    uint  init_status=0;
 //*****
 
 // Solid sensor object - BMP280
@@ -33,17 +37,16 @@ public:
       
       //registers[0] is filled in parent constructor
       sensor_registers[1].value=BMP280_SENSOR;
-      sensor_registers[2].value=MULTIPLIER;
-     
+          
     }
 
     void virtual init() {
     
       if(DEBUG_BMP280) debug("BMP280", "BMP280 starting init");
 
-      uint status = bmp.begin(BMP280_I2C_ADDRESS);
+      init_status = bmp.begin(BMP280_I2C_ADDRESS);
 
-       if (!status) 
+       if (!init_status) 
         if(DEBUG_BMP280) debug("BMP280", "!!! Could not find a valid BMP280 sensor");
 
       bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
@@ -62,6 +65,11 @@ public:
       
     };
 
+    int virtual nosensor_val(long val){
+      if (val == 176 || val == 178 || val==177)
+        return 1;
+      return 0;
+    };
 
     // Override the sensor_loop to populate registers with ds1820
 
@@ -74,43 +82,46 @@ public:
         if(DEBUG_BMP280)  debug("BMP280", "init run not_ok, cant start sensor loop");
         return;
       }
-
       
-      int raw_result=bmp.readTemperature();
+      float raw_result=bmp.readTemperature();
 
-      if (!isnan(raw_result)){
-        // if(DEBUG_BMP280)  debug("BMP280", "SENSOR_STATE_OK");
-        sensor_registers[3].value=SENSOR_STATE_OK;
-        sensor_registers[4].value=static_cast<uint16_t>(raw_result*MULTIPLIER);
-        ulong raw_pressure =(ulong) bmp.readPressure()*MULTIPLIER;
-        high_word = (raw_pressure >> 16) & 0xFFFF;  // hibyte
-        low_word  = raw_pressure & 0xFFFF;          // lowbyte
-/*
-        sensor_registers[5].value = (raw_pressure >> 48) & 0xFFFF;  // Самый старший 16-битный блок
-        sensor_registers[6].value = (raw_pressure >> 32) & 0xFFFF;
-        sensor_registers[7].value = (raw_pressure >> 16) & 0xFFFF;
-        sensor_registers[8].value = raw_pressure & 0xFFFF;
-*/
-        sensor_registers[5].value=high_word;
-        sensor_registers[6].value=low_word;
+      //no sensor or no values from sensor
+      if (isnan(raw_result)|| init_status==0 || nosensor_val(raw_result)){
+        sensor_registers[2].value=SENSOR_STATE_FAIL;
+        sensor_registers[3].value=MULTIPLIER;
+        sensor_registers[4].value=NO_SENSOR_VAL;
+        sensor_registers[3].value=MULTIPLIER2;
+        sensor_registers[5].value=NO_SENSOR_VAL;
+        sensor_registers[3].value=MULTIPLIER3;
+        sensor_registers[6].value=NO_SENSOR_VAL; 
 
         //sensor_registers[6].value=bmp.readAltitude(1013.25)*MULTIPLIER;
       }else{
-        sensor_registers[3].value=SENSOR_STATE_FAIL;
-        sensor_registers[4].value=static_cast<uint16_t>(NO_SENSOR_VAL);
-        sensor_registers[5].value=static_cast<uint16_t>(NO_SENSOR_VAL);
-        sensor_registers[6].value=static_cast<uint16_t>(NO_SENSOR_VAL); 
+
+         // if(DEBUG_BMP280)  debug("BMP280", "SENSOR_STATE_OK");
+        sensor_registers[2].value=SENSOR_STATE_OK;
+        sensor_registers[3].value=MULTIPLIER;
+        sensor_registers[4].value=(int32_t)raw_result*MULTIPLIER;
+        sensor_registers[5].value=MULTIPLIER2;
+        sensor_registers[6].value=(int32_t)bmp.readPressure()*MULTIPLIER2;
+        sensor_registers[7].value=MULTIPLIER3;
+        sensor_registers[8].value=(int32_t)bmp.readAltitude(APRESSURE)*MULTIPLIER3;
+
       } 
 
-
-
-     //debug("BMP280", "status="+String(sensor_registers[3].value)+ \
+      if(DEBUG_BMP280) debug("BMP280", "ok_status="+String(sensor_registers[3].value)+ \
                            ", t="+String(sensor_registers[4].value)+ \
-                           ", p_hi="+String(sensor_registers[5].value)+ \
-                           ", p_low="+String(sensor_registers[6].value)+ \
-                           ", p_check="+String(((uint32_t)sensor_registers[5].value << 16) | sensor_registers[6].value)+ \
+                           ", p="+String(sensor_registers[6].value)+ \
+                           ", altitude="+String(sensor_registers[8].value)+ \
                            ", "+String(millis()));
-    };
+
+
+    //if no sensor lets try to init it 
+      if(init_status==0) {
+        init_status = bmp.begin(BMP280_I2C_ADDRESS);
+      }
+
+  };
         
 };
 

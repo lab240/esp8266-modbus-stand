@@ -12,6 +12,7 @@
 
 #include "mbmregs/mbmbregsa.h"
 #include "mbmregs/mbmbregs-ds1820.h"
+#include "mbmregs/mbmbregs-bmp280.h"
 
 
 #include "dmbsensor/vsensor-random.h"
@@ -23,7 +24,7 @@
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
 
-// #define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+//#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
 
 #ifdef DEBUG_VERBOSE_MODE_NOMODBUS_OUT
   #define SWAPSERIAL 0
@@ -36,8 +37,8 @@
 
 //if all sensors not present, we use random sensor
 
-#define DS1820_SENSOR_PRESENTS 1
-#define BMP280_SENSOR_PRESENTS 0
+#define DS1820_SENSOR_PRESENTS 0
+#define BMP280_SENSOR_PRESENTS 1
 #define BH1750_SENSOR_PRESENTS 0
 
 //#define POWER_PIN D1 //old version
@@ -232,22 +233,23 @@ void setup() {
    if (DS1820_SENSOR_PRESENTS){
 
     mbsensor=new vector_sensor_ds1820(_s->mb_modbus_address);
-
-    dprogramm.debug(DSMAIN, "ds1820 sensor create done");
     mbsensor->init();
     dprogramm.debug(DSMAIN, "ds1820 sensor init done");
-    
     mb_regs=new modbus_regs_ds1820(_s,&mbus_obj,mbsensor);
-    
-    //mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
-   
+
    }else if (BH1750_SENSOR_PRESENTS){
    
-     mbsensor=new vector_sensor_bh1750(_s->mb_modbus_address);
+    mbsensor=new vector_sensor_bh1750(_s->mb_modbus_address);
+    mbsensor->init();
+    dprogramm.debug(DSMAIN, "bh1750 sensor init done");
+    mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
    
    }else if (BMP280_SENSOR_PRESENTS){
    
      mbsensor=new vector_sensor_bmp280(_s->mb_modbus_address);
+     mbsensor->init();
+     dprogramm.debug(DSMAIN, "bmp280 sensor init done");
+     mb_regs=new modbus_regs_bmp280(_s,&mbus_obj,mbsensor);
    
    }else{
    

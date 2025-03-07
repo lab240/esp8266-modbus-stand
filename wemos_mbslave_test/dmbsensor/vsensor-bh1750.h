@@ -34,7 +34,7 @@ public:
       
       //registers[0] is filled in parent constructor
       sensor_registers[1].value=LIGTH_SENSOR;
-      sensor_registers[2].value=MULTIPLIER;
+      sensor_registers[3].value=MULTIPLIER;
      
     }
 
@@ -79,7 +79,7 @@ public:
       uint16_t u_test_result=static_cast<uint16_t>(lux_l);
 
       sensor_registers[4].value = u_test_result;
-      if (nosensor_val(lux_l)) sensor_registers[3].value=SENSOR_STATE_OK; else sensor_registers[3].value=SENSOR_STATE_FAIL;
+      if (nosensor_val(lux_l)) sensor_registers[2].value=SENSOR_STATE_OK; else sensor_registers[2].value=SENSOR_STATE_FAIL;
       if(DEBUG_BH1750)  debug("BH1750", "BH1750 signed_val="+String(lux_l)+", unsigned_val="+String(u_test_result)+", "+String(millis()));
     };
         

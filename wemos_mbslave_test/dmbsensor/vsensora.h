@@ -45,7 +45,7 @@ public:
     };
 
     // Reads the value of an input register by its index
-    uint16_t read_sensor_register(int index) {
+    int32_t read_sensor_register(int index) {
         if (index < 0 || index >= sensor_registers.size()) {
             Serial.println("Error Read: Invalid input register index.");
             return 0;
@@ -93,7 +93,7 @@ public:
 
 
     // Returns the value of the main register
-    uint16_t get_value() const {
+    int32_t get_value() const {
         if (main_register_index >= 0 && main_register_index < sensor_registers.size()) {
             return sensor_registers[main_register_index].value;
         } else {
