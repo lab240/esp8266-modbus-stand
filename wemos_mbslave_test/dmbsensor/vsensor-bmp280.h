@@ -4,13 +4,13 @@
 #include <Wire.h>
 #include <Adafruit_BMP280.h>
 
-#include "mbsensora.h"
+#include "vsensora.h"
 
 const uint8_t BMP280_I2C_ADDRESS = 0x76;
 
 #define DEBUG_BMP280 0
 
-class modbus_sensor_bmp280 : public modbus_sensor {
+class vector_sensor_bmp280 : public vector_sensor {
 
 protected:
 
@@ -28,12 +28,12 @@ protected:
 
 public:
     // Constructor: Pass parameters to the base class constructor
-    //id, num_hold_registers, num_coils, main_register
-    modbus_sensor_bmp280(int id) :modbus_sensor(id, 9, 0, 5) {
+    //id, num_sensor_registers, num_coils, main_register
+    vector_sensor_bmp280(int id) :vector_sensor(id, 9, 0, 5) {
       
       //registers[0] is filled in parent constructor
-      hold_registers[1].value=BMP280_SENSOR;
-      hold_registers[2].value=MULTIPLIER;
+      sensor_registers[1].value=BMP280_SENSOR;
+      sensor_registers[2].value=MULTIPLIER;
      
     }
 
@@ -80,35 +80,35 @@ public:
 
       if (!isnan(raw_result)){
         // if(DEBUG_BMP280)  debug("BMP280", "SENSOR_STATE_OK");
-        hold_registers[3].value=SENSOR_STATE_OK;
-        hold_registers[4].value=static_cast<uint16_t>(raw_result*MULTIPLIER);
+        sensor_registers[3].value=SENSOR_STATE_OK;
+        sensor_registers[4].value=static_cast<uint16_t>(raw_result*MULTIPLIER);
         ulong raw_pressure =(ulong) bmp.readPressure()*MULTIPLIER;
         high_word = (raw_pressure >> 16) & 0xFFFF;  // hibyte
         low_word  = raw_pressure & 0xFFFF;          // lowbyte
 /*
-        hold_registers[5].value = (raw_pressure >> 48) & 0xFFFF;  // Самый старший 16-битный блок
-        hold_registers[6].value = (raw_pressure >> 32) & 0xFFFF;
-        hold_registers[7].value = (raw_pressure >> 16) & 0xFFFF;
-        hold_registers[8].value = raw_pressure & 0xFFFF;
+        sensor_registers[5].value = (raw_pressure >> 48) & 0xFFFF;  // Самый старший 16-битный блок
+        sensor_registers[6].value = (raw_pressure >> 32) & 0xFFFF;
+        sensor_registers[7].value = (raw_pressure >> 16) & 0xFFFF;
+        sensor_registers[8].value = raw_pressure & 0xFFFF;
 */
-        hold_registers[5].value=high_word;
-        hold_registers[6].value=low_word;
+        sensor_registers[5].value=high_word;
+        sensor_registers[6].value=low_word;
 
-        //hold_registers[6].value=bmp.readAltitude(1013.25)*MULTIPLIER;
+        //sensor_registers[6].value=bmp.readAltitude(1013.25)*MULTIPLIER;
       }else{
-        hold_registers[3].value=SENSOR_STATE_FAIL;
-        hold_registers[4].value=static_cast<uint16_t>(NO_SENSOR_VAL);
-        hold_registers[5].value=static_cast<uint16_t>(NO_SENSOR_VAL);
-        hold_registers[6].value=static_cast<uint16_t>(NO_SENSOR_VAL); 
+        sensor_registers[3].value=SENSOR_STATE_FAIL;
+        sensor_registers[4].value=static_cast<uint16_t>(NO_SENSOR_VAL);
+        sensor_registers[5].value=static_cast<uint16_t>(NO_SENSOR_VAL);
+        sensor_registers[6].value=static_cast<uint16_t>(NO_SENSOR_VAL); 
       } 
 
 
 
-     //debug("BMP280", "status="+String(hold_registers[3].value)+ \
-                           ", t="+String(hold_registers[4].value)+ \
-                           ", p_hi="+String(hold_registers[5].value)+ \
-                           ", p_low="+String(hold_registers[6].value)+ \
-                           ", p_check="+String(((uint32_t)hold_registers[5].value << 16) | hold_registers[6].value)+ \
+     //debug("BMP280", "status="+String(sensor_registers[3].value)+ \
+                           ", t="+String(sensor_registers[4].value)+ \
+                           ", p_hi="+String(sensor_registers[5].value)+ \
+                           ", p_low="+String(sensor_registers[6].value)+ \
+                           ", p_check="+String(((uint32_t)sensor_registers[5].value << 16) | sensor_registers[6].value)+ \
                            ", "+String(millis()));
     };
         

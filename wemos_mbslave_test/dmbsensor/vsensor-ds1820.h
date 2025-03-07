@@ -1,17 +1,17 @@
-#ifndef dmbsensords1820
+#ifndef dmbsensords1820b
 #define dmbsensords1820
 #include <Arduino.h>
 #include <DallasTemperature.h>
 #include <OneWire.h>
 #include <Wire.h>
-#include "mbsensora.h"
+#include "vsensora.h"
 
 
 #define DS1820_PIN D2
 
 #define DEBUG_DS1820 0
 
-class modbus_sensor_ds1820 : public modbus_sensor {
+class vector_sensor_ds1820 : public vector_sensor {
 
 protected:
 
@@ -36,12 +36,12 @@ protected:
 
 public:
     // Constructor: Pass parameters to the base class constructor
-    //id, num_hold_registers, num_coils, main_register
-    modbus_sensor_ds1820(int id) :modbus_sensor(id, 5, 0, 4) {
+    //id, num_sensor_registers, num_coils, main_register
+    vector_sensor_ds1820(int id) :vector_sensor(id, 5, 0, 4) {
         // Seed the ds1820
     
-    hold_registers[1].value=TEMPERATURE_SENSOR;
-    hold_registers[2].value=MULTIPLIER;
+    sensor_registers[1].value=TEMPERATURE_SENSOR;
+    sensor_registers[2].value=MULTIPLIER;
 
     oneWire = new OneWire(DS1820_PIN);
     ds_sensor = new DallasTemperature(oneWire);
@@ -56,14 +56,9 @@ public:
       ds_sensor->getAddress(tempDeviceAddress, 0);
       //ds_sensor->setWaitForConversion(false);
 
-      debug("DS1820", "DS1820 dallas sensor ok");
-
-    
-      
+      debug("DS1820", "Sensor ok, main_register_index="+String(main_register_index));
 
       init_ok=1;
-
-      debug("DS1820", "init ok");
 
       /***************/
       
@@ -91,14 +86,11 @@ public:
         return;
       }
       ds_sensor->requestTemperatures();
-      int test_result=ds_sensor->getTempC(tempDeviceAddress)*MULTIPLIER;
+      int raw_result=ds_sensor->getTempC(tempDeviceAddress)*MULTIPLIER;
 
-      //if minus, convering 
-      uint16_t u_test_result=static_cast<uint16_t>(test_result);
-
-      hold_registers[4].value = u_test_result;
-      if (nosensor_val(test_result) || fake_val(test_result)) hold_registers[3].value=SENSOR_STATE_OK; else hold_registers[3].value=SENSOR_STATE_FAIL;
-      debug("DS1820", "val="+String(test_result)+", unsigned_val="+String(u_test_result)+", "+String(millis()));
+      sensor_registers[4].value = raw_result;
+      if (nosensor_val(raw_result) || fake_val(raw_result)) sensor_registers[3].value=SENSOR_STATE_FAIL; else sensor_registers[3].value=SENSOR_STATE_OK;
+      if(DEBUG_DS1820) debug("DS1820", "val="+String(raw_result)+", "+String(millis()));
     };
         
 };

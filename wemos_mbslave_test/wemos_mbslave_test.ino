@@ -9,17 +9,21 @@
 #include "donofflib/ddevice.h"
 #include "mbmb/mbpublish.h"
 #include "dboot/dbootmodbus.h"
-#include "mbmb/mbmbregsa.h"
-#include "dmbsensor/mbsensor-random.h"
-#include "dmbsensor/mbsensor-ds1820.h"
-#include "dmbsensor/mbsensor-bh1750.h"
-#include "dmbsensor/mbsensor-bmp280.h"
+
+#include "mbmregs/mbmbregsa.h"
+#include "mbmregs/mbmbregs-ds1820.h"
+
+
+#include "dmbsensor/vsensor-random.h"
+#include "dmbsensor/vsensor-ds1820.h"
+#include "dmbsensor/vsensor-bh1750.h"
+#include "dmbsensor/vsensor-bmp280.h"
 
 #define DEBUG 1
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
 
-//#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+// #define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
 
 #ifdef DEBUG_VERBOSE_MODE_NOMODBUS_OUT
   #define SWAPSERIAL 0
@@ -29,9 +33,12 @@
   #define SILENT_SERIAL_MODE 1
 #endif
 
-//#define DS1820_SENSOR_PRESENTS
-#define BMP280_SENSOR_PRESENTS
-//#define BH1750_SENSOR_PRESENTS
+
+//if all sensors not present, we use random sensor
+
+#define DS1820_SENSOR_PRESENTS 1
+#define BMP280_SENSOR_PRESENTS 0
+#define BH1750_SENSOR_PRESENTS 0
 
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
@@ -73,9 +80,9 @@ DProg dprogramm;
 
 DPublisherMqtt* publisher_mqtt;
 DDevice* mb_dev;
-MBRegsA* mb_regs;
-modbus_sensor* mbsensor;
-//modbus_sensor_ds1820* ds1820sensor;
+modbus_regs* mb_regs;
+vector_sensor* mbsensor;
+//vector_sensor_ds1820* ds1820sensor;
 
 //void callback(char* topic, byte* payload, unsigned int length);
 Queue<pub_events> que_wanted= Queue<pub_events>(MAX_QUEUE_WANTED);
@@ -215,30 +222,44 @@ void setup() {
   if(SILENT_SERIAL_MODE){
     mb_dev->enable_silent();
     dprogramm.enable_silent();
-   }
+  }
 
   mbus_obj.begin(&Serial);  //указание порта для модбас
   mbus_obj.slave(_s->mb_modbus_address); // указание адреса устройства в протоколе модбас
 
-   dprogramm.debug(DSMAIN, "Starting sensor ds1820");
+  dprogramm.debug(DSMAIN, "Starting sensor");
 
-   #ifdef DS1820_SENSOR_PRESENTS
-     mbsensor=new modbus_sensor_ds1820(_s->mb_modbus_address);
-   #elif defined(BH1750_SENSOR_PRESENTS)
-     mbsensor=new modbus_sensor_bh1750(_s->mb_modbus_address);
-   #elif defined(BMP280_SENSOR_PRESENTS)
-     mbsensor=new modbus_sensor_bmp280(_s->mb_modbus_address);
-   #else
-     mbsensor=new modbus_sensor_random(_s->mb_modbus_address,10,10,1);
-   #endif
+   if (DS1820_SENSOR_PRESENTS){
 
-  dprogramm.debug(DSMAIN, "sensor create done");
+    mbsensor=new vector_sensor_ds1820(_s->mb_modbus_address);
 
-  mbsensor->init();
+    dprogramm.debug(DSMAIN, "ds1820 sensor create done");
+    mbsensor->init();
+    dprogramm.debug(DSMAIN, "ds1820 sensor init done");
+    
+    mb_regs=new modbus_regs_ds1820(_s,&mbus_obj,mbsensor);
+    
+    //mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
+   
+   }else if (BH1750_SENSOR_PRESENTS){
+   
+     mbsensor=new vector_sensor_bh1750(_s->mb_modbus_address);
+   
+   }else if (BMP280_SENSOR_PRESENTS){
+   
+     mbsensor=new vector_sensor_bmp280(_s->mb_modbus_address);
+   
+   }else{
+   
+    mbsensor=new vector_sensor_random(_s->mb_modbus_address,10,10,1);
+    dprogramm.debug(DSMAIN, "Random sensor create done");
+    mbsensor->init();
+    dprogramm.debug(DSMAIN, "Random sensor init done");
+    mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
+   
+   }
 
-  dprogramm.debug(DSMAIN, "sensor init done");
-
-  mb_regs=new MBRegsA(_s,&mbus_obj,mbsensor);
+ 
 
   if(SILENT_SERIAL_MODE){
     mb_regs->enable_silent();
@@ -257,9 +278,11 @@ void setup() {
   dprogramm.debug(DSMAIN,"Callback fot modbus regs... enabled");
 
   led_mode_setup=0; //finish setup blinking
+
+  
 }
 
-// loop withoot modbus, only sensor check
+// loop without modbus, only sensor check
 /*
 void loop(){
  if(softTimer<(millis())) {
@@ -288,6 +311,7 @@ void loop() {
      digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
      softTimer=millis()+500;
   }
+  
 }
 
 
@@ -299,4 +323,5 @@ void tickf(){
     digitalWrite(LED_DATA, LOW);
   }
 }
+
 

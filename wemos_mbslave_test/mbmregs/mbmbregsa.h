@@ -2,10 +2,10 @@
 #define __mbmbregsa__
 
 #include <ModbusRTU.h>
-#include "../dmbsensor/mbsensora.h"
+#include "../dmbsensor/vsensora.h"
 
 
-class MBRegsA: public DBase {
+class modbus_regs: public DBase {
   private:
          
   protected:
@@ -14,26 +14,26 @@ class MBRegsA: public DBase {
    uint hregs_amount;
    uint cregs_amount;
    uint init_ok=0;
-   modbus_sensor* _mbsensor=nullptr;
+   vector_sensor* _vsensor=nullptr;
    
 
   public:
-    MBRegsA(WMSettings * __s, ModbusRTU * __mb, modbus_sensor* __mbsensor): DBase(__s) {
+    modbus_regs(WMSettings * __s, ModbusRTU * __mb, vector_sensor* __vsensor): DBase(__s) {
         _mb=__mb;
-        _mbsensor=__mbsensor;
+        _vsensor=__vsensor;
     };
 
     void init() {
 
-        hregs_amount=_mbsensor->get_num_hold_registers();
-        cregs_amount=_mbsensor->get_num_coils();
+        hregs_amount=_vsensor->get_num_sensor_registers();
+        cregs_amount=_vsensor->get_num_coils();
 
-        debug("MBREGS", "Intit hold-coil regs");
+        debug("MBREGS", "Intit sensor-coil regs");
 
-        init_hold_regs();
+        init_sensor_regs();
         init_coil_regs();
 
-        debug("MBRREGS", "Hold regs="+String(hregs_amount)+"; Coil regs="+String(cregs_amount));
+        debug("MBRREGS", "sensor regs="+String(hregs_amount)+"; Coil regs="+String(cregs_amount));
 
         init_ok = 1;
     };
@@ -42,29 +42,32 @@ class MBRegsA: public DBase {
         update_regs();
     }
 
-    void virtual update_regs(){
-
-        //_mbsensor->sensor_loop();
-
+    void virtual update_hold_regs(){
         for(int h_reg=0; h_reg< hregs_amount; h_reg++){
-            _mb->Hreg(h_reg,_mbsensor->read_hold_register(h_reg));
+            _mb->Hreg(h_reg,_vsensor->read_sensor_register(h_reg));
         }
-
+    }
+;
+    void virtual update_coil_regs(){
         for(int c_reg=0; c_reg< cregs_amount; ++c_reg){
-            _mb->Coil(c_reg,_mbsensor->read_coil(c_reg));
+            _mb->Coil(c_reg,_vsensor->read_coil(c_reg));
         }
-
     };
 
-    void virtual print_hold_regs(){
+    void virtual update_regs(){
+       update_hold_regs();
+       update_coil_regs();
+    };
+
+    void virtual print_sensor_regs(){
         String sregs="";
         for(int h_reg=0; h_reg< hregs_amount; h_reg++){
-            sregs+="|"+String(h_reg)+"="+String(_mbsensor->read_hold_register(h_reg));
+            sregs+="|"+String(h_reg)+"="+String(_vsensor->read_sensor_register(h_reg));
         }
         debug("MBREGS", "REGSH="+sregs);
-    }
+    };
 
-    void virtual init_hold_regs(){
+    void virtual init_sensor_regs(){
        
         for(int h_reg=0; h_reg<=hregs_amount; h_reg++){
             _mb->addHreg(h_reg); //add register

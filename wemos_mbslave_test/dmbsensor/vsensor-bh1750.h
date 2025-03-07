@@ -4,13 +4,13 @@
 #include <Wire.h>
 #include <BH1750.h>
 
-#include "mbsensora.h"
+#include "vsensora.h"
 
 const uint8_t BH1750_I2C_ADDRESS = 0x23;
 
 #define DEBUG_BH1750 0
 
-class modbus_sensor_bh1750 : public modbus_sensor {
+class vector_sensor_bh1750 : public vector_sensor {
 
 protected:
 
@@ -29,12 +29,12 @@ protected:
 
 public:
     // Constructor: Pass parameters to the base class constructor
-    //id, num_hold_registers, num_coils, main_register
-    modbus_sensor_bh1750(int id) :modbus_sensor(id, 5, 0, 4) {
+    //id, num_sensor_registers, num_coils, main_register
+    vector_sensor_bh1750(int id) :vector_sensor(id, 5, 0, 4) {
       
       //registers[0] is filled in parent constructor
-      hold_registers[1].value=LIGTH_SENSOR;
-      hold_registers[2].value=MULTIPLIER;
+      sensor_registers[1].value=LIGTH_SENSOR;
+      sensor_registers[2].value=MULTIPLIER;
      
     }
 
@@ -78,8 +78,8 @@ public:
       //if minus, convering 
       uint16_t u_test_result=static_cast<uint16_t>(lux_l);
 
-      hold_registers[4].value = u_test_result;
-      if (nosensor_val(lux_l)) hold_registers[3].value=SENSOR_STATE_OK; else hold_registers[3].value=SENSOR_STATE_FAIL;
+      sensor_registers[4].value = u_test_result;
+      if (nosensor_val(lux_l)) sensor_registers[3].value=SENSOR_STATE_OK; else sensor_registers[3].value=SENSOR_STATE_FAIL;
       if(DEBUG_BH1750)  debug("BH1750", "BH1750 signed_val="+String(lux_l)+", unsigned_val="+String(u_test_result)+", "+String(millis()));
     };
         
