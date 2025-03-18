@@ -24,7 +24,7 @@
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
 
-//#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
 
 #ifdef DEBUG_VERBOSE_MODE_NOMODBUS_OUT
   #define SWAPSERIAL 0
@@ -38,8 +38,8 @@
 //if all sensors not present, we use random sensor
 
 #define DS1820_SENSOR_PRESENTS 0
-#define BMP280_SENSOR_PRESENTS 1
-#define BH1750_SENSOR_PRESENTS 0
+#define BMP280_SENSOR_PRESENTS 0
+#define BH1750_SENSOR_PRESENTS 1
 
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
