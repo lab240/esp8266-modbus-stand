@@ -52,6 +52,8 @@ public:
         if (String(_s->dev_id) == "empty_dev") mqtt_not_configured=1;
   };
 
+  //void virtual override publish_sensors=0;
+
   void init(Queue<pub_events> *_q){
       DPublisher::init(_q);
       configTime(_s->time_zone * 3600,  0, NTP_SERVER_1, NTP_SERVER_2, NTP_SERVER_3);
