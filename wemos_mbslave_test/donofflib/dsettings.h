@@ -13,13 +13,6 @@ enum pub_events {
  PUBLISHER_WANT_SAY_JUST_SYNCED,
 };
 
-enum sensor_types { 
- UNDEF_SENSOR_TYPE,
- RANDOM_SENSOR_8H_10C,
- TEMPERATURE_SENSOR,
- LIGTH_SENSOR,
- BMP280_SENSOR
- };
 
 enum sensor_state { 
   SENSOR_STATE_OK=1,

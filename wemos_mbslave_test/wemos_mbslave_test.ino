@@ -4,21 +4,27 @@
 #include <Queue.h>
 
 #include <ESP8266WiFi.h>
+#include <ModbusRTU.h>
 
 #include "donofflib/dpublishmqtt.h"
 #include "donofflib/ddevice.h"
 #include "mbmb/mbpublish.h"
 #include "dboot/dbootmodbus.h"
 
+/*
 #include "mbmregs/mbmbregsa.h"
 #include "mbmregs/mbmbregs-ds1820.h"
 #include "mbmregs/mbmbregs-bmp280.h"
+*/
 
-
+/*
 #include "dmbsensor/vsensor-random.h"
 #include "dmbsensor/vsensor-ds1820.h"
 #include "dmbsensor/vsensor-bh1750.h"
 #include "dmbsensor/vsensor-bmp280.h"
+*/
+
+#include "dmbsensor/vmsensor-bh1750.h" 
 
 #define DEBUG 1
 #define WIFI_ENABLE 0
@@ -81,9 +87,12 @@ DProg dprogramm;
 
 DPublisherMqtt* publisher_mqtt;
 DDevice* mb_dev;
-modbus_regs* mb_regs;
-vector_sensor* mbsensor;
+//modbus_regs* mb_regs;
+//vector_sensor* mbsensor;
 //vector_sensor_ds1820* ds1820sensor;
+
+VmSensora* mbsensor;
+
 
 //void callback(char* topic, byte* payload, unsigned int length);
 Queue<pub_events> que_wanted= Queue<pub_events>(MAX_QUEUE_WANTED);
@@ -232,43 +241,43 @@ void setup() {
 
    if (DS1820_SENSOR_PRESENTS){
 
-    mbsensor=new vector_sensor_ds1820(_s->mb_modbus_address);
-    mbsensor->init();
-    dprogramm.debug(DSMAIN, "ds1820 sensor init done");
-    mb_regs=new modbus_regs_ds1820(_s,&mbus_obj,mbsensor);
+    // mbsensor=new vector_sensor_ds1820(_s->mb_modbus_address);
+    // mbsensor->init();
+    // dprogramm.debug(DSMAIN, "ds1820 sensor init done");
+    // mb_regs=new modbus_regs_ds1820(_s,&mbus_obj,mbsensor);
 
    }else if (BH1750_SENSOR_PRESENTS){
    
-    mbsensor=new vector_sensor_bh1750(_s->mb_modbus_address);
+    mbsensor=new VmSensorBH1750(_s->mb_modbus_address);
     mbsensor->init();
     dprogramm.debug(DSMAIN, "bh1750 sensor init done");
-    mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
+    //mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
    
    }else if (BMP280_SENSOR_PRESENTS){
    
-     mbsensor=new vector_sensor_bmp280(_s->mb_modbus_address);
-     mbsensor->init();
-     dprogramm.debug(DSMAIN, "bmp280 sensor init done");
-     mb_regs=new modbus_regs_bmp280(_s,&mbus_obj,mbsensor);
+    //  mbsensor=new vector_sensor_bmp280(_s->mb_modbus_address);
+    //  mbsensor->init();
+    //  dprogramm.debug(DSMAIN, "bmp280 sensor init done");
+    //  mb_regs=new modbus_regs_bmp280(_s,&mbus_obj,mbsensor);
    
    }else{
    
-    mbsensor=new vector_sensor_random(_s->mb_modbus_address,10,10,1);
-    dprogramm.debug(DSMAIN, "Random sensor create done");
-    mbsensor->init();
-    dprogramm.debug(DSMAIN, "Random sensor init done");
-    mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
+    // mbsensor=new vector_sensor_random(_s->mb_modbus_address,10,10,1);
+    // dprogramm.debug(DSMAIN, "Random sensor create done");
+    // mbsensor->init();
+    // dprogramm.debug(DSMAIN, "Random sensor init done");
+    // mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
    
    }
 
  
 
   if(SILENT_SERIAL_MODE){
-    mb_regs->enable_silent();
-    mbsensor->enable_silent();
+    //mb_regs->enable_silent();
+    //mbsensor->enable_silent();
   }
 
-  mb_regs->init();
+  //mb_regs->init();
 
   
   dprogramm.debug(DSMAIN,"Modbus init regs... enabled");
@@ -308,10 +317,16 @@ void loop() {
   //yield();   // отпускаем для обработки Wi-Fi
   if(softTimer<(millis())) {
      mbsensor->sensor_loop();
-     mb_regs->update_regs(); // обновляем регистры по таймеру softTimer= millis() + 500;
+     //mb_regs->update_regs(); 
      //mb_regs->print_hold_regs();
-     digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
-     softTimer=millis()+500;
+     //expose_to_modbus(&mbus_obj, mbsensor);
+     //digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
+
+     mbsensor->print_registers();
+     mbsensor->print_holdregisters();
+     mbsensor->print_mqtt();
+
+     softTimer=millis()+1000;
   }
   
 }
@@ -325,5 +340,13 @@ void tickf(){
     digitalWrite(LED_DATA, LOW);
   }
 }
+
+void expose_to_modbus( ModbusRTU * __mb, VmSensora* sensor) {
+    const std::vector<int16_t>& regs = sensor->holder_registers;
+    for (size_t i = 0; i < regs.size(); ++i) {
+        __mb->Hreg(i, regs[i]);
+    }
+}
+
 
 

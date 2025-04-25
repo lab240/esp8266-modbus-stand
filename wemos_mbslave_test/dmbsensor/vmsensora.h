@@ -1,12 +1,28 @@
+#ifndef vmsensora
+#define vmsensora
+
 #include <map>
 #include <vector>
 #include <Arduino.h>
 
+
+enum sensor_types { 
+ UNDEF_SENSOR_TYPE,
+ RANDOM_SENSOR_8H_10C,
+ TEMPERATURE_SENSOR,
+ LIGTH_SENSOR,
+ BMP280_SENSOR
+ };
+
+
 // A base class for sensors that store register values by name and expose them via MQTT topics.
-class vector_sensor : public DProg {
-protected:
+class VmSensora : public DProg {
+public:
     // Stores sensor register values by their name
     std::map<String, int32_t> sensor_registers;
+    
+    // Stores sensor multipliers values by their name
+    std::map<String, uint16_t> register_multipliers;
 
     // Stores MQTT topics for each register
     std::map<String, String> mqtt_topics;
@@ -26,19 +42,32 @@ protected:
     // Sensor type identifier
     int sensor_type;
 
+    int init_ok=0;
+
 public:
     // Constructor initializes registers, topics, and sensor metadata
-    vector_sensor(int id, int type, const std::vector<String>& register_names, const String& main_register_name, const String& sensor_name)
+    VmSensora(int id, int type, const std::vector<String>& register_names, const String& main_register_name, const String& sensor_name)
         : device_id(id), sensor_type(type), name_main_register(main_register_name), sensor_name(sensor_name) {
 
         for (const auto& name : register_names) {
             sensor_registers[name] = 0;
-            mqtt_topics[name] = sensor_name + "/" + name;
+            mqtt_topics[name] = sensor_name + "-" + name;
+            register_multipliers[name] = 1; // default multiplier is 1
         }
     }
 
     // Abstract function for sensor loop logic
     virtual void sensor_loop() = 0;
+
+
+    int cdebug(const String& source, const String& message) {
+        if (silent_mode) return 0;
+        //Serial.print("[");
+        Serial.print(source);
+        Serial.print(": ");
+        Serial.println(message);
+        return 1;
+    }
 
     // Optional initialization hook
     virtual void init() {
@@ -46,7 +75,26 @@ public:
         holder_registers.clear();
         holder_registers.push_back(static_cast<int16_t>(device_id));
         holder_registers.push_back(static_cast<int16_t>(sensor_type));
+
+        debug("SENSOR_A", "SENSOR_A init ok");
+
+        init_ok=1;
+
     };
+
+    // Set multiplier for converting float to int for a register
+    void set_register_multiplier(const String& name, uint16_t multiplier) {
+        register_multipliers[name] = multiplier;
+    }
+
+    // Read scaled (float) value from a register
+    float read_scaled_sensor_register(const String& name) {
+        if (sensor_registers.find(name) == sensor_registers.end()) return 0;
+        uint16_t multiplier = register_multipliers[name];
+        if (multiplier == 0) return 0;
+        return static_cast<float>(sensor_registers[name]) / multiplier;
+    }
+
 
     // Returns the number of defined sensor registers
     size_t get_num_sensor_registers() const {
@@ -68,14 +116,15 @@ public:
     }
 
     // Writes a value to a register by name and updates the MQTT topic
-    void write_sensor_register(const String& name, int32_t value) {
+    void write_sensor_register(const String& name, float value) {
         if (sensor_registers.find(name) == sensor_registers.end()) {
             Serial.println("Error Write: Invalid input register name.");
             return;
         }
-        sensor_registers[name] = value;
-        update_topic(name);
+        uint16_t multiplier = register_multipliers[name];
+        sensor_registers[name] = static_cast<int32_t>(value * multiplier);
     }
+
 
     // Retrieves the MQTT topic associated with a register
     String get_mqtt_topic(const String& name) {
@@ -96,26 +145,28 @@ public:
     // Updates a specific MQTT topic with the current value of its register
     void update_topic(const String& name) {
         if (sensor_registers.find(name) != sensor_registers.end()) {
-            mqtt_topics[name] = sensor_name + "/" + name + "=" + String(sensor_registers[name]);
+            float scaled_value = read_scaled_sensor_register(name);
+            mqtt_topics[name] = String(scaled_value, 2);  // Corrected: only value stored here
         }
     }
+
 
     // Fills the holder_registers vector with only dynamic register values
     void fill_holder_registers() {
-        // Keep the first two elements (id and type) intact
         if (holder_registers.size() < 2) {
             holder_registers.resize(2);
         }
-
-        // Clear everything after the first two entries
         holder_registers.resize(2);
-
-        // Add register values
         for (const auto& reg : sensor_registers) {
-            holder_registers.push_back(static_cast<int16_t>(reg.second));
+            const String& name = reg.first;
+            int16_t mult = static_cast<int16_t>(register_multipliers[name]);
+            int16_t val = static_cast<int16_t>(reg.second);
+            holder_registers.push_back(mult);
+            holder_registers.push_back(val);
         }
     }
 
+    
     // Gets the device ID
     int get_id() const {
         return device_id;
@@ -148,7 +199,7 @@ public:
     }
 
     // Gets the value from the main register; logs an error if not found
-    int32_t get_value() const {
+    int32_t get_value()  {
         if (sensor_registers.find(name_main_register) != sensor_registers.end()) {
             return sensor_registers[name_main_register];
         } else {
@@ -156,4 +207,28 @@ public:
             return 0;
         }
     }
+
+    void print_registers() {
+        for (const auto& reg : sensor_registers) {
+            cdebug("REG", reg.first + "=" + String(reg.second));
+        }
+    }
+
+    void print_holdregisters() {
+        String line = "";
+        for (size_t i = 0; i < holder_registers.size(); ++i) {
+            line += String(holder_registers[i]);
+            if (i != holder_registers.size() - 1) line += ", ";
+        }
+        cdebug("HREG", line);
+    }
+
+    void print_mqtt() {
+        for (const auto& topic : mqtt_topics) {
+            cdebug("MQTT", topic.first + " -> " + topic.second);
+        }
+    }
+
 };
+
+#endif

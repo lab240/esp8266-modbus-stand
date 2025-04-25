@@ -1,32 +1,45 @@
+#ifndef vmsensorbh1750
+#define vmsensorbh1750
+
+#define MULTIPLIER_LUX 100
+
 #include <Wire.h>
 #include <BH1750.h>
+#include "vmsensora.h"
 
 // Concrete implementation of vector_sensor for BH1750 light sensor
-class BH1750Sensor : public vector_sensor {
+class VmSensorBH1750 : public VmSensora {
 private:
     BH1750 lightMeter;
 
 public:
-    BH1750Sensor()
-        : vector_sensor(
-            1,                  // ID
-            1750,               // Sensor type (custom type ID for BH1750)
-            {"lux"},           // Register names (was "illuminance")
-            "lux",             // Main register name (was "illuminance")
-            "bh1750_sensor"    // Sensor name
-        ) {}
+    VmSensorBH1750(int id)
+        : VmSensora(
+            id,                  // ID
+            LIGTH_SENSOR,       // Sensor type (type ID for BH1750)
+            {"lux"},           // Register name
+            "lux",             // Main register name 
+            "bh1750"    // Sensor name
+        ) {
+
+            set_register_multiplier("lux", MULTIPLIER_LUX);
+        }
 
     void init() override {
         Wire.begin();
         lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE);
 
         // Fill constant values into holder_registers (ID and type)
-        vector_sensor::init();
+        VmSensora::init();
     }
 
     void sensor_loop() override {
         float lux = lightMeter.readLightLevel();
-        write_sensor_register("lux", static_cast<int32_t>(lux));
+        cdebug("RAW", String(lux));
+        write_sensor_register("lux",lux);
         fill_holder_registers(); // append register value to holder_registers
+        update_topics();
     }
 };
+
+#endif
