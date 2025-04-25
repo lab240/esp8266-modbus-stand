@@ -6,6 +6,11 @@
 #include <Arduino.h>
 
 
+#define NO_SENSOR_VALUE -12700
+#define NO_SENSOR_DATA_VALUE   -12800
+#define NO_SENSOR_STATE -1
+#define NO_SENSOR_DATA_STATE  -2
+
 enum sensor_types { 
  UNDEF_SENSOR_TYPE,
  RANDOM_SENSOR_8H_10C,
@@ -59,6 +64,9 @@ public:
     // Abstract function for sensor loop logic
     virtual void sensor_loop() = 0;
 
+    // should return: 0 - ok, -1 - no sensor, -2 - no data
+    virtual int no_sensor_check(float val) = 0;
+
 
     int cdebug(const String& source, const String& message) {
         if (silent_mode) return 0;
@@ -75,8 +83,6 @@ public:
         holder_registers.clear();
         holder_registers.push_back(static_cast<int16_t>(device_id));
         holder_registers.push_back(static_cast<int16_t>(sensor_type));
-
-        debug("SENSOR_A", "SENSOR_A init ok");
 
         init_ok=1;
 
@@ -116,13 +122,21 @@ public:
     }
 
     // Writes a value to a register by name and updates the MQTT topic
-    void write_sensor_register(const String& name, float value) {
+     void write_sensor_register(const String& name, float value) {
         if (sensor_registers.find(name) == sensor_registers.end()) {
             Serial.println("Error Write: Invalid input register name.");
             return;
         }
-        uint16_t multiplier = register_multipliers[name];
-        sensor_registers[name] = static_cast<int32_t>(value * multiplier);
+
+        int check = no_sensor_check(value);
+        if (check == NO_SENSOR_STATE || init_ok==0) {
+            sensor_registers[name] = NO_SENSOR_VALUE;
+        } else if (check == NO_SENSOR_DATA_STATE) {
+            sensor_registers[name] = NO_SENSOR_DATA_VALUE;
+        } else {
+            uint16_t multiplier = register_multipliers[name];
+            sensor_registers[name] = static_cast<int32_t>(value * multiplier);
+        }
     }
 
 
@@ -145,10 +159,17 @@ public:
     // Updates a specific MQTT topic with the current value of its register
     void update_topic(const String& name) {
         if (sensor_registers.find(name) != sensor_registers.end()) {
-            float scaled_value = read_scaled_sensor_register(name);
-            mqtt_topics[name] = String(scaled_value, 2);  // Corrected: only value stored here
+            uint16_t multiplier = register_multipliers[name];
+            if (multiplier == 1 || sensor_registers[name]==NO_SENSOR_VALUE || sensor_registers[name]==NO_SENSOR_DATA_VALUE ) {
+                mqtt_topics[name] = String(sensor_registers[name]);
+            } else {
+                float scaled_value = read_scaled_sensor_register(name);
+                mqtt_topics[name] = String(scaled_value, 2);  // two decimal places
+            }
         }
     }
+
+
 
 
     // Fills the holder_registers vector with only dynamic register values

@@ -25,6 +25,7 @@
 */
 
 #include "dmbsensor/vmsensor-bh1750.h" 
+#include "dmbsensor/vmsensor-bmp280.h" 
 
 #define DEBUG 1
 #define WIFI_ENABLE 0
@@ -44,8 +45,8 @@
 //if all sensors not present, we use random sensor
 
 #define DS1820_SENSOR_PRESENTS 0
-#define BMP280_SENSOR_PRESENTS 0
-#define BH1750_SENSOR_PRESENTS 1
+#define BMP280_SENSOR_PRESENTS 1
+#define BH1750_SENSOR_PRESENTS 0
 
 //#define POWER_PIN D1 //old version
 #define POWER_PIN D5 //new version
@@ -254,6 +255,10 @@ void setup() {
     //mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
    
    }else if (BMP280_SENSOR_PRESENTS){
+
+    mbsensor=new VmSensorBMP280(_s->mb_modbus_address);
+    mbsensor->init();
+    dprogramm.debug(DSMAIN, "bmp280 sensor init done");
    
     //  mbsensor=new vector_sensor_bmp280(_s->mb_modbus_address);
     //  mbsensor->init();
