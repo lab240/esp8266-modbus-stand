@@ -4,24 +4,15 @@
 #include <map>
 #include <vector>
 #include <Arduino.h>
-
-
-#define NO_SENSOR_VALUE -12700
-#define NO_SENSOR_DATA_VALUE   -12800
-#define NO_SENSOR_STATE -1
-#define NO_SENSOR_DATA_STATE  -2
-
-enum sensor_types { 
- UNDEF_SENSOR_TYPE,
- RANDOM_SENSOR_8H_10C,
- TEMPERATURE_SENSOR,
- LIGTH_SENSOR,
- BMP280_SENSOR
- };
+#include "vmsensorvars.h"
 
 
 // A base class for sensors that store register values by name and expose them via MQTT topics.
 class VmSensora : public DProg {
+
+protected: 
+    bool split_into_words = false;
+    bool public_multiplier = false;
 public:
     // Stores sensor register values by their name
     std::map<String, int32_t> sensor_registers;
@@ -79,6 +70,7 @@ public:
 
     // Optional initialization hook
     virtual void init() {
+       
         // Initialize holder_registers with constant values: id and type
         holder_registers.clear();
         holder_registers.push_back(static_cast<int16_t>(device_id));
@@ -173,7 +165,7 @@ public:
 
 
     // Fills the holder_registers vector with only dynamic register values
-    void fill_holder_registers() {
+    void fill_holder_registers_old1() {
         if (holder_registers.size() < 2) {
             holder_registers.resize(2);
         }
@@ -186,6 +178,51 @@ public:
             holder_registers.push_back(val);
         }
     }
+
+  void fill_holder_registers() {
+        holder_registers.resize(2); // Keep only ID and sensor type
+
+        // First, main register
+        if (sensor_registers.find(name_main_register) != sensor_registers.end()) {
+            uint16_t multiplier = register_multipliers[name_main_register];
+            int32_t value = sensor_registers[name_main_register];
+
+            if (public_multiplier) {
+                holder_registers.push_back(multiplier);
+            }
+
+            if (split_into_words) {
+                holder_registers.push_back((value >> 16) & 0xFFFF); // High
+                holder_registers.push_back(value & 0xFFFF);         // Low
+            } else {
+                holder_registers.push_back(static_cast<int16_t>(value));
+            }
+        }
+
+        // Then other registers
+        for (const auto& reg : sensor_registers) {
+            const String& name = reg.first;
+            if (name == name_main_register) continue; // Already handled
+
+            uint16_t multiplier = register_multipliers[name];
+            int32_t value = reg.second;
+
+            if (public_multiplier) {
+                holder_registers.push_back(multiplier);
+            }
+
+            if (split_into_words) {
+                holder_registers.push_back((value >> 16) & 0xFFFF);
+                holder_registers.push_back(value & 0xFFFF);
+            } else {
+                holder_registers.push_back(static_cast<int16_t>(value));
+            }
+        }
+}
+
+
+
+
 
     
     // Gets the device ID
@@ -229,25 +266,43 @@ public:
         }
     }
 
+    void enable_split_into_words() { split_into_words = true; }
+
+    void enable_public_multiplier() { public_multiplier = true; }
+    void disable_public_multiplier() { public_multiplier = false; } 
+
     void print_registers() {
-        for (const auto& reg : sensor_registers) {
-            cdebug("REG", reg.first + "=" + String(reg.second));
+        String line = "";
+        for (auto it = sensor_registers.begin(); it != sensor_registers.end(); ++it) {
+            line += it->first + "=" + String(it->second);
+            if (std::next(it) != sensor_registers.end()) {
+                line += ", ";
+            }
         }
-    }
+        cdebug("REG", line);
+}
 
     void print_holdregisters() {
         String line = "";
         for (size_t i = 0; i < holder_registers.size(); ++i) {
             line += String(holder_registers[i]);
-            if (i != holder_registers.size() - 1) line += ", ";
+            if (i != holder_registers.size() - 1) {
+                line += ", ";
+            }
         }
         cdebug("HREG", line);
-    }
+}
+
 
     void print_mqtt() {
-        for (const auto& topic : mqtt_topics) {
-            cdebug("MQTT", topic.first + " -> " + topic.second);
+        String line = "";
+        for (auto it = mqtt_topics.begin(); it != mqtt_topics.end(); ++it) {
+            line += it->first + "=" + it->second;
+            if (std::next(it) != mqtt_topics.end()) {
+                line += ", ";
+            }
         }
+        cdebug("MQTT", line);
     }
 
 };

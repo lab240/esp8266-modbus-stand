@@ -1,8 +1,6 @@
 #ifndef vmsensorbh1750
 #define vmsensorbh1750
 
-#define MULTIPLIER_LUX 100
-
 #include <Wire.h>
 #include <BH1750.h>
 #include "vmsensora.h"
@@ -25,7 +23,7 @@ public:
             set_register_multiplier("lux", MULTIPLIER_LUX);
         }
 
-    void init() override {
+    void init() override{
         Wire.begin();
         lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE);
 

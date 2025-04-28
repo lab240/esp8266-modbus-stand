@@ -26,6 +26,8 @@
 
 #include "dmbsensor/vmsensor-bh1750.h" 
 #include "dmbsensor/vmsensor-bmp280.h" 
+#include "dmbsensor/vmsensor-ds1820.h" 
+#include "dmbsensor/vmsensor-random.h" 
 
 #define DEBUG 1
 #define WIFI_ENABLE 0
@@ -45,7 +47,7 @@
 //if all sensors not present, we use random sensor
 
 #define DS1820_SENSOR_PRESENTS 0
-#define BMP280_SENSOR_PRESENTS 1
+#define BMP280_SENSOR_PRESENTS 0
 #define BH1750_SENSOR_PRESENTS 0
 
 //#define POWER_PIN D1 //old version
@@ -242,36 +244,32 @@ void setup() {
 
    if (DS1820_SENSOR_PRESENTS){
 
-    // mbsensor=new vector_sensor_ds1820(_s->mb_modbus_address);
-    // mbsensor->init();
-    // dprogramm.debug(DSMAIN, "ds1820 sensor init done");
-    // mb_regs=new modbus_regs_ds1820(_s,&mbus_obj,mbsensor);
+    mbsensor=new VmSensorDS1820(_s->mb_modbus_address);
+    mbsensor->init();
+     mbsensor->enable_public_multiplier(); // публикуем множители вместе со значениями
+    dprogramm.debug(DSMAIN, "DS1820 sensor init done");
 
    }else if (BH1750_SENSOR_PRESENTS){
    
     mbsensor=new VmSensorBH1750(_s->mb_modbus_address);
     mbsensor->init();
+    mbsensor->enable_public_multiplier(); // публикуем множители вместе со значениями
     dprogramm.debug(DSMAIN, "bh1750 sensor init done");
-    //mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
    
    }else if (BMP280_SENSOR_PRESENTS){
 
     mbsensor=new VmSensorBMP280(_s->mb_modbus_address);
     mbsensor->init();
+    mbsensor->enable_public_multiplier(); // публикуем множители вместе со значениями
+    mbsensor->enable_split_into_words();   // если нужно разбивать на 2 слова
     dprogramm.debug(DSMAIN, "bmp280 sensor init done");
    
-    //  mbsensor=new vector_sensor_bmp280(_s->mb_modbus_address);
-    //  mbsensor->init();
-    //  dprogramm.debug(DSMAIN, "bmp280 sensor init done");
-    //  mb_regs=new modbus_regs_bmp280(_s,&mbus_obj,mbsensor);
    
    }else{
    
-    // mbsensor=new vector_sensor_random(_s->mb_modbus_address,10,10,1);
-    // dprogramm.debug(DSMAIN, "Random sensor create done");
-    // mbsensor->init();
-    // dprogramm.debug(DSMAIN, "Random sensor init done");
-    // mb_regs=new modbus_regs(_s,&mbus_obj,mbsensor);
+    mbsensor=new VmSensorRandom(_s->mb_modbus_address);
+    mbsensor->init();
+    dprogramm.debug(DSMAIN, "random sensor init done");
    
    }
 
