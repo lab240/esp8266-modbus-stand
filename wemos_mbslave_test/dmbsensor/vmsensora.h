@@ -13,6 +13,8 @@ class VmSensora : public DProg {
 protected: 
     bool split_into_words = false;
     bool public_multiplier = false;
+    String json_topic;  // JSON formatted topic for all register values
+
 public:
     // Stores sensor register values by their name
     std::map<String, int32_t> sensor_registers;
@@ -103,6 +105,25 @@ public:
     int get_register_count() const {
         return sensor_registers.size();
     }
+    
+    //get number of modbus registers
+    int get_modbus_register_count() {
+        int count = 2; // Для ID устройства и типа сенсора
+
+        for (const auto& reg : sensor_registers) {
+            if (public_multiplier) {
+                count += 1; // Для множителя
+            }
+
+            if (split_into_words) {
+                count += 2; // Значение разбивается на два слова
+            } else {
+                count += 1; // Одно слово на значение
+            }
+        }
+
+        return count;
+    }
 
     // Reads a register value by name, logs an error if not found
     int32_t read_sensor_register(const String& name) {
@@ -146,20 +167,41 @@ public:
         for (auto& topic : mqtt_topics) {
             update_topic(topic.first);
         }
+        update_json_topic();
     }
 
     // Updates a specific MQTT topic with the current value of its register
-    void update_topic(const String& name) {
-        if (sensor_registers.find(name) != sensor_registers.end()) {
-            uint16_t multiplier = register_multipliers[name];
-            if (multiplier == 1 || sensor_registers[name]==NO_SENSOR_VALUE || sensor_registers[name]==NO_SENSOR_DATA_VALUE ) {
-                mqtt_topics[name] = String(sensor_registers[name]);
+    void update_topic(const String& reg_name) {
+        if (mqtt_topics.find(reg_name) == mqtt_topics.end()) return;
+
+        float val = read_scaled_sensor_register(reg_name);
+        String payload;
+        if (val == (int)val) {
+            payload = String((int)val);
+        } else {
+            payload = String(val, 2);
+        }
+
+       mqtt_topics[reg_name]=payload;
+    }
+
+   void update_json_topic() {
+        json_topic = "{";
+        for (auto it = sensor_registers.begin(); it != sensor_registers.end(); ++it) {
+            float val = read_scaled_sensor_register(it->first);
+            json_topic += "\"" + it->first + "\":";
+            if (val == (int)val) {
+                json_topic += String((int)val);
             } else {
-                float scaled_value = read_scaled_sensor_register(name);
-                mqtt_topics[name] = String(scaled_value, 2);  // two decimal places
+                json_topic += String(val, 2);
+            }
+            if (std::next(it) != sensor_registers.end()) {
+                json_topic += ",";
             }
         }
+        json_topic += "}";
     }
+
 
 
 
@@ -266,8 +308,13 @@ public:
         }
     }
 
-    void enable_split_into_words() { split_into_words = true; }
+// Configure behavior by flags
+    void configure(int flags) {
+        split_into_words = flags & ENABLE_TWO_WORDS;
+        public_multiplier = flags & ENABLE_MULTIPLIER_MODBUS;
+    }
 
+    void enable_split_into_words() { split_into_words = true; }
     void enable_public_multiplier() { public_multiplier = true; }
     void disable_public_multiplier() { public_multiplier = false; } 
 
@@ -303,6 +350,10 @@ public:
             }
         }
         cdebug("MQTT", line);
+    }
+
+    void print_json_topic() {
+        cdebug("JSON", json_topic);
     }
 
 };

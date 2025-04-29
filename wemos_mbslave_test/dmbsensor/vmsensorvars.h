@@ -26,7 +26,9 @@ const char* PRESSURE_REGISTER_NAME="pressure";
 #define NO_SENSOR_STATE -1
 #define NO_SENSOR_DATA_STATE  -2
 
-#define ENABLE_SPLIT_IN_TO_WORDS 1
-#define ENABLE_SPLIT_IN_TO_WORDS 1
+// Flag definitions
+#define DISABLE                      0
+#define ENABLE_TWO_WORDS              (1 << 0) // 0b0001
+#define ENABLE_MULTIPLIER_MODBUS      (1 << 1) // 0b0010
 
 #endif

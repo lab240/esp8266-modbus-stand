@@ -12,7 +12,7 @@ const  uint8_t DS1820_PIN =  D2;
 
 #define NO_DS1820_SENSOR_VAL -128
 #define NO_DS1820_SENSOR_DATA_VAL  -127
-#define DS1820_FAKE_VAL 8500
+#define DS1820_FAKE_VAL 85
 
 class VmSensorDS1820 : public VmSensora {
 private:

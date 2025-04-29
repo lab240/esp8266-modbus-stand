@@ -3,6 +3,8 @@
 
 #include <queue.h>
 #include "dpublishmqtt.h"
+#include "../dmbsensor/vmsensora.h"
+#include <ModbusRTU.h>
 
 //#include "dqueue.h"
 
@@ -24,6 +26,7 @@ class DDevice: public DBase {
  protected:
 
     uint mqtt_enabled=1;
+    uint modbus_enabled=1;
 
     String reasonStr = "";
     uint8_t  blink_loop = 0;
@@ -35,18 +38,24 @@ class DDevice: public DBase {
     uint mycounter = 0;
     uint mycounter2=0;
     ulong mytimer = 0;
-    int init_ok = 0;
+
+    int init_ok=0;
+    int init_mqtt_ok = 0;
+    int init_mbus_ok = 0;
+    
     int m_just_synced=0;
     pub_events what_to_want;
 
     Queue<pub_events>* que_wanted;
     
     DPublisherMqtt* pub;
+    VmSensora* mbsensor;
+    ModbusRTU * mb_obj;
    
   public:
     DDevice(WMSettings * __s): DBase(__s) {};
 
-    void init(DPublisherMqtt* _pub, Queue<pub_events>* _q) {
+    void init_mqtt(DPublisherMqtt* _pub, Queue<pub_events>* _q) {
 
       pub = _pub;
       que_wanted=_q;
@@ -57,8 +66,43 @@ class DDevice: public DBase {
         mqtt_enabled=0;
       } 
       
-      init_ok = 1;
+      init_mqtt_ok = 1;
 
+    };
+
+    void init_modbus(ModbusRTU * __mb, VmSensora* __mbsensor ) {
+
+      mb_obj=__mb;
+      mbsensor=__mbsensor;
+
+      if(mb_obj==nullptr){
+        debug(DSDEVICE,"NO MODBUS MODE");
+        modbus_enabled=0;
+        return;
+      } 
+
+      init_modbus_hregs();
+
+      init_mbus_ok = 1;
+
+    };
+
+
+    void expose_to_modbus() {
+        const std::vector<int16_t>& regs = mbsensor->holder_registers;
+        for (size_t i = 0; i < mbsensor->get_modbus_register_count(); ++i) {
+            mb_obj->Hreg(i, regs[i]);
+            debug("MB_EXPOSE", String(regs[i]));
+        }
+    };
+
+    void init_modbus_hregs() {
+        const std::vector<int16_t>& regs = mbsensor->holder_registers;
+        for (size_t i = 0; i < mbsensor->get_modbus_register_count(); ++i) {
+             mb_obj->addHreg(i);
+             mb_obj->Hreg(i, 0);
+             debug("MB_IINIT", String(i));
+        }
     };
 
     void virtual enable_silent(){
@@ -77,7 +121,7 @@ class DDevice: public DBase {
            slow_loop(mycounter);
            
         }
-/*
+
         if(mycounter >MAX_LOOPS && mycounter <=MAX_LOOPS+MAX_SENSORS){
           //debug("SUPPLY_LOOP", "SENSORS LOOP");
           sensors_loop(mycounter-MAX_LOOPS);
@@ -88,7 +132,7 @@ class DDevice: public DBase {
           very_slow_loop(mycounter2);
           mycounter2++;
         }
-*/
+
         mycounter++;
         //300 ms loop
        
@@ -111,6 +155,18 @@ class DDevice: public DBase {
       native_loop();
       if(mqtt_enabled) pub->mqtt_loop();
 
+    };
+
+    void virtual sensors_loop(int mycounter){
+      if (mycounter==1){
+         //mbsensor->sensor_loop();
+         //expose_to_modbus();
+      }
+    }
+      
+    void virtual fast_loop() {
+        mbsensor->sensor_loop();
+        expose_to_modbus();
     };
 
     void virtual one_minute_loop(){};
@@ -205,10 +261,8 @@ class DDevice: public DBase {
       }
     };
     
-    void virtual sensors_loop(int mycounter){};
-    void virtual fast_loop() {};
-    void virtual native_loop() {};
 
+    void virtual native_loop() {};
 
     void reconnect_loop() {
       //do nothing if mqtt is not enabled  

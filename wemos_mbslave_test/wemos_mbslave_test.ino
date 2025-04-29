@@ -11,19 +11,6 @@
 #include "mbmb/mbpublish.h"
 #include "dboot/dbootmodbus.h"
 
-/*
-#include "mbmregs/mbmbregsa.h"
-#include "mbmregs/mbmbregs-ds1820.h"
-#include "mbmregs/mbmbregs-bmp280.h"
-*/
-
-/*
-#include "dmbsensor/vsensor-random.h"
-#include "dmbsensor/vsensor-ds1820.h"
-#include "dmbsensor/vsensor-bh1750.h"
-#include "dmbsensor/vsensor-bmp280.h"
-*/
-
 #include "dmbsensor/vmsensor-bh1750.h" 
 #include "dmbsensor/vmsensor-bmp280.h" 
 #include "dmbsensor/vmsensor-ds1820.h" 
@@ -33,7 +20,7 @@
 #define WIFI_ENABLE 0
 #define MQTT_ENABLE 0
 
-#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+//#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
 
 #ifdef DEBUG_VERBOSE_MODE_NOMODBUS_OUT
   #define SWAPSERIAL 0
@@ -60,18 +47,6 @@
 // #define EXTRAREGS 5 
 
 #define MAXEXTRAREGS 255 
-
-// #define modbus_address settings.custom_level1
-// #define intregs_amount settings.custom_level2
-// #define coilregs_amount settings.custom_level3
-// #define serial_baudrate settings.custom_level4
-// #define serial_settings_num settings.custom_level_notify1
-
-// #define modbus_address  _s->custom_level1
-// #define intregs_amount  _s->custom_level2
-// #define coilregs_amount _s->custom_level3
-// #define  _s->custom_level4
-// #define serial_settings_num _s->custom_level_notify1
 
 SerialConfig serial_settings=DEFAULT_MB_FC;
 
@@ -142,12 +117,11 @@ void setup() {
 
     publisher_mqtt=new DPublisherMqttMBstand(_s, nullptr, 0);
     publisher_mqtt->init(&que_wanted);
-    mb_dev->init(publisher_mqtt, &que_wanted);
+    mb_dev->init_mqtt(publisher_mqtt, &que_wanted);
   }else{
     dprogramm.debug(DSMAIN,"Init mb_dev with NO MQTT MODE");
-    mb_dev->init(nullptr,nullptr);
+    mb_dev->init_mqtt(nullptr,nullptr);
   }
-
 
   led_mode_setup =1;
 
@@ -186,7 +160,6 @@ void setup() {
 
   delete(dboot);
 
-
   if(WIFI_ENABLE){
     ticker.attach(0.15,tickf);
     struct station_config stationConf;
@@ -199,12 +172,7 @@ void setup() {
 
   pinMode(POWER_PIN, OUTPUT);
 
-
   dprogramm.debug(DSMAIN, "Run new Serial.begin");
-
-  //Serial.end();   // Остановить текущий Serial
-  
-  //Serial.setDebugOutput(false); 
 
   dprogramm.debug(DSMAIN, "Write HIGH to enable RS485");
 
@@ -246,7 +214,7 @@ void setup() {
 
     mbsensor=new VmSensorDS1820(_s->mb_modbus_address);
     mbsensor->init();
-     mbsensor->enable_public_multiplier(); // публикуем множители вместе со значениями
+    mbsensor->configure(ENABLE_MULTIPLIER_MODBUS);
     dprogramm.debug(DSMAIN, "DS1820 sensor init done");
 
    }else if (BH1750_SENSOR_PRESENTS){
@@ -260,7 +228,7 @@ void setup() {
 
     mbsensor=new VmSensorBMP280(_s->mb_modbus_address);
     mbsensor->init();
-    mbsensor->enable_public_multiplier(); // публикуем множители вместе со значениями
+    mbsensor->configure(ENABLE_TWO_WORDS | ENABLE_MULTIPLIER_MODBUS); // публикуем множители вместе со значениями
     mbsensor->enable_split_into_words();   // если нужно разбивать на 2 слова
     dprogramm.debug(DSMAIN, "bmp280 sensor init done");
    
@@ -273,23 +241,22 @@ void setup() {
    
    }
 
- 
-
   if(SILENT_SERIAL_MODE){
     //mb_regs->enable_silent();
-    //mbsensor->enable_silent();
+    mbsensor->enable_silent();
   }
-
-  //mb_regs->init();
-
   
   dprogramm.debug(DSMAIN,"Modbus init regs... enabled");
 
 //callback when request comes
 
-  mbus_obj.onGetHreg(0,cbReadHreg,_s->mb_intregs_amount);
+  mbus_obj.onGetHreg(0,cbReadHreg,mbsensor->get_modbus_register_count());
+  dprogramm.debug(DSMAIN,"Callback for Modbus sensors --> "+String(mbsensor->get_modbus_register_count()));
 
-  dprogramm.debug(DSMAIN,"Callback fot modbus regs... enabled");
+  //init_modbus_hregs(&mbus_obj, mbsensor);
+
+  mb_dev->init_modbus(&mbus_obj, mbsensor);
+
 
   led_mode_setup=0; //finish setup blinking
 
@@ -318,19 +285,6 @@ void loop() {
   mb_dev->supply_loop();
   
   //yield();   // отпускаем для обработки Wi-Fi
-  if(softTimer<(millis())) {
-     mbsensor->sensor_loop();
-     //mb_regs->update_regs(); 
-     //mb_regs->print_hold_regs();
-     //expose_to_modbus(&mbus_obj, mbsensor);
-     //digitalWrite(LED_DATA2, !digitalRead(LED_DATA2));
-
-     mbsensor->print_registers();
-     mbsensor->print_holdregisters();
-     mbsensor->print_mqtt();
-
-     softTimer=millis()+1000;
-  }
   
 }
 
@@ -344,12 +298,7 @@ void tickf(){
   }
 }
 
-void expose_to_modbus( ModbusRTU * __mb, VmSensora* sensor) {
-    const std::vector<int16_t>& regs = sensor->holder_registers;
-    for (size_t i = 0; i < regs.size(); ++i) {
-        __mb->Hreg(i, regs[i]);
-    }
-}
+
 
 
 
