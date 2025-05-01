@@ -3,7 +3,7 @@
 
 #include <queue.h>
 #include "dpublishmqtt.h"
-#include "../dmbsensor/vmsensora.h"
+#include "../vmsensor/vmsensora.h"
 #include <ModbusRTU.h>
 
 //#include "dqueue.h"
@@ -92,7 +92,7 @@ class DDevice: public DBase {
         const std::vector<int16_t>& regs = mbsensor->holder_registers;
         for (size_t i = 0; i < mbsensor->get_modbus_register_count(); ++i) {
             mb_obj->Hreg(i, regs[i]);
-            debug("MB_EXPOSE", String(regs[i]));
+            //debug("MB_EXPOSE", String(regs[i]));
         }
     };
 
@@ -101,7 +101,7 @@ class DDevice: public DBase {
         for (size_t i = 0; i < mbsensor->get_modbus_register_count(); ++i) {
              mb_obj->addHreg(i);
              mb_obj->Hreg(i, 0);
-             debug("MB_IINIT", String(i));
+             //debug("MB_IINIT", String(i));
         }
     };
 
@@ -281,7 +281,7 @@ class DDevice: public DBase {
            ", size_s="+String(sizeof(*_s))
        );
 
-       if(DEVICE_VERBOSE)
+       else if(DEVICE_VERBOSE)
         debug("SHEDULER", "**Service loop->TIMESTAMP=" +  s_get_timestamp('<','>') + 
            ", user="+ String(_s->mqttUser)+", dev_id=" + String(_s->dev_id)+", size_s="+String(sizeof(*_s))
        );
@@ -290,6 +290,7 @@ class DDevice: public DBase {
         if(pub->is_connected()){
           pub->publish_uptime();
           pub->publish_json();
+          pub->publish_vsensor(mbsensor);
         } 
       }   
    

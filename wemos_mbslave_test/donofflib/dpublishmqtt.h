@@ -8,8 +8,8 @@
 #include "dcommands.h"
 #include "dbase.h"
 #include "dpublisher.h"
-
 #include "dpubsetting.h"
+#include "../vmsensor/vmsensora.h"
 
 #define MAX_CONNECT_ATTEMPTS_BEFORE_RESET 100
 #define DDOS_MS 1000  //period in MS between to incoming commands
@@ -292,6 +292,20 @@ public:
         _c->publish(form_full_topic(_topic).c_str(), _valStr.c_str());
         return 1;
     };
+
+     void publish_vsensor(VmSensora* sensor) {
+         if (!sensor) return; // Проверка на nullptr
+         // Публикуем каждый топик
+        for (const auto& topic_pair :  sensor->mqtt_topics) {
+            const String& topic = topic_pair.first;
+            const String& payload = topic_pair.second;
+            String fulltopic=form_full_topic(topic);
+            if (is_connected()){
+              _c->publish(fulltopic.c_str(), payload.c_str());
+            }
+            debug("VPUBLISHER", fulltopic );
+        }
+     };
 
   };
 

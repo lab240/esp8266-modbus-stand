@@ -28,6 +28,4 @@
 #define MAX_SERIAL_VAR_NUM 62
 //*****************************************************
 
-#define SKIP_CHAR 'C'  //char ti skip waiting command
-
 #endif

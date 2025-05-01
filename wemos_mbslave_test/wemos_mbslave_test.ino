@@ -6,21 +6,20 @@
 #include <ESP8266WiFi.h>
 #include <ModbusRTU.h>
 
-#include "donofflib/dpublishmqtt.h"
 #include "donofflib/ddevice.h"
 #include "mbmb/mbpublish.h"
 #include "dboot/dbootmodbus.h"
 
-#include "dmbsensor/vmsensor-bh1750.h" 
-#include "dmbsensor/vmsensor-bmp280.h" 
-#include "dmbsensor/vmsensor-ds1820.h" 
-#include "dmbsensor/vmsensor-random.h" 
+#include "vmsensor/vmsensor-bh1750.h" 
+#include "vmsensor/vmsensor-bmp280.h" 
+#include "vmsensor/vmsensor-ds1820.h" 
+#include "vmsensor/vmsensor-random.h" 
 
 #define DEBUG 1
-#define WIFI_ENABLE 0
-#define MQTT_ENABLE 0
+#define WIFI_ENABLE 1
+#define MQTT_ENABLE 1
 
-//#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
 
 #ifdef DEBUG_VERBOSE_MODE_NOMODBUS_OUT
   #define SWAPSERIAL 0
@@ -63,7 +62,7 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 DProg dprogramm;
 
-DPublisherMqtt* publisher_mqtt;
+DPublisherMqttMBstand* publisher_mqtt;
 DDevice* mb_dev;
 //modbus_regs* mb_regs;
 //vector_sensor* mbsensor;

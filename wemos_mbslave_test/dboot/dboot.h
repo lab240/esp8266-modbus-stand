@@ -5,6 +5,9 @@
 #include "../donofflib/dbase.h"
 
 #define DEFAULT_NUM_TRYES 3   //waiting command pause
+#define SKIP_CHAR 'C'  //char ti skip waiting command
+#define EXT_CHAR 'E'
+#define EXTRA_NUM 100
 
 class DBootA : public DBase
 {
@@ -18,6 +21,7 @@ protected:
   ulong m_incoming_ms=0;
   uint attempts=0;
   uint was_init=0;
+  uint extra_try_num=0;
 
   //number of seconds when we are waitng the command
   uint num_tryes=DEFAULT_NUM_TRYES;
@@ -60,12 +64,15 @@ public:
         char inCommandChr[50] = {0};    // incomming array of chars
         uint8_t counterByte = 0;      //  byte pointer
 
-        while(is_cmd==0 && count_try < num_tryes){  // waiting command loop
-
-            Serial.print(count_try,DEC);
-            Serial.print("/");
-            Serial.print(num_tryes);
-            Serial.print("...\t");  // печатаем секунды таймаута
+        while(is_cmd==0 && count_try < num_tryes+extra_try_num){  // waiting command loop
+            if(extra_try_num == 0){
+                Serial.print(count_try,DEC);
+                Serial.print("/");
+                Serial.print(num_tryes);
+                Serial.print("...\t");  // печатаем секунды таймаута
+            }else{
+                Serial.print("_");
+            }
 
             softTimer = millis() + 1000;                  // set timer 1sec
 
@@ -126,6 +133,11 @@ public:
                     debug(DSCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Skip waiting command", TOUT);
                     stop_command=1;
                     return 0;
+                }
+
+                 if( inCommandStr.length()<3 && inCommandStr.charAt(0)==EXT_CHAR) {
+                    debug(DSCOMMAND, "Command->"+String(inCommandStr.charAt(0))+"; Increase timeout", TOUT);
+                    extra_try_num=EXTRA_NUM;
                 }
 
             //<parameter>=<value> string
