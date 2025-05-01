@@ -15,7 +15,6 @@
 #define DDOS_MS 1000  //period in MS between to incoming commands
 
 
-
 class DPublisherMqtt : public DPublisher
 {
 protected:
@@ -299,11 +298,11 @@ public:
         for (const auto& topic_pair :  sensor->mqtt_topics) {
             const String& topic = topic_pair.first;
             const String& payload = topic_pair.second;
-            String fulltopic=form_full_topic(topic);
+            String fulltopic=form_full_topic("/out/sensors/"+topic);
             if (is_connected()){
               _c->publish(fulltopic.c_str(), payload.c_str());
             }
-            debug("VPUBLISHER", fulltopic );
+            //debug("VPUBLISHER", "Topic"+fulltopic+", value="+ payload);
         }
      };
 
