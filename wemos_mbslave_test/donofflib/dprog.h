@@ -3,7 +3,6 @@
 
 #include "Arduino.h"
 
-
 //sorce debug
 #define DSCOMMAND "COMMNAD"
 #define DSEEPROM "EEPROM"
@@ -58,8 +57,8 @@ enum debug_events{
 
 class DProg {
   protected:
-   int silent_mode=0; 
-
+   uint silent_mode=0; 
+ 
   public:
     int debug_level = 4;
   
@@ -195,7 +194,7 @@ String virtual s_get_timestamp(char c_b='T', char c_e='Z'){
   int mywifi_try_to_connect(){
   int c = 0;
   IPAddress ip;
-  while (WiFi.status() != WL_CONNECTED && c < 20) {
+  while (WiFi.status() != WL_CONNECTED && c < 30) {
     delay(500);
     Serial.print(".");
     c++;
@@ -232,8 +231,6 @@ String get_serial_settings_string(uint serial_settings_num){
   return "UNKNOWN";
 };
 
-
-    
 };
 
 

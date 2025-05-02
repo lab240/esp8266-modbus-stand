@@ -95,7 +95,7 @@ public:
         time_t tnow = time(nullptr);
         struct tm * timeinfo;
 
-        debug("TIMESYNC", "TIME FROM SERVER:"+String(ctime(&tnow)), DTINFO);
+        debug("TIMESYNC", "TIME FROM SERVER:"+String(ctime(&tnow)));
 
         timeinfo=localtime(&tnow);
 
@@ -140,7 +140,7 @@ public:
         if(attempts>MAX_CONNECT_ATTEMPTS_BEFORE_RESET && _s->autoreboot_on_max_attempts) reset();
       
         if (WiFi.status() != WL_CONNECTED) {
-            debug("RECONNECT", "NO WIFI CONNECTION->"+ String(WiFi.status()), DTERROR);
+            debug("RECONNECT", "NO WIFI CONNECTION, ERROR->"+ String(WiFi.status()));
             return 0;
         }
         
@@ -293,7 +293,10 @@ public:
     };
 
      void publish_vsensor(VmSensora* sensor) {
-         if (!sensor) return; // Проверка на nullptr
+         if (!sensor) {
+          debug("VPULISHER", "No sensor");
+          return; // Проверка на nullptr
+         }
          // Публикуем каждый топик
         for (const auto& topic_pair :  sensor->mqtt_topics) {
             const String& topic = topic_pair.first;
@@ -301,8 +304,10 @@ public:
             String fulltopic=form_full_topic("/out/sensors/"+topic);
             if (is_connected()){
               _c->publish(fulltopic.c_str(), payload.c_str());
+              //debug("VPUBLISHER", "MQTT OK, topic:<"+fulltopic+">, value:"+ payload);
+            }else{
+            //debug("VPUBLISHER", "No Mqtt, topic:"+fulltopic+", value="+ payload);
             }
-            //debug("VPUBLISHER", "Topic"+fulltopic+", value="+ payload);
         }
      };
 

@@ -125,4 +125,27 @@ typedef struct {
 #define MAX_CUSTOM_LEVEL 32000
 
 
+/********** blink ****************/
+
+#define BL_CONNECTED_ON 0
+#define BL_CONNECTED_OFF 1
+#define BL_CONNECTING 2
+#define BL_CONFIG 2
+#define BL_OFFLINE_ON 5
+#define BL_OFFLINE_OFF 4
+
+
+
+const uint8_t modes[] = {
+  0B00000000, //Светодиод выключен
+  0B11111111, //Горит постоянно
+  0B00001111, //Мигание по 0.5 сек
+  0B00000001, //Короткая вспышка раз в секунду
+  0B00000101, //Две короткие вспышки раз в секунду
+  0B00010101, //Три короткие вспышки раз в секунду
+  0B01010101,  //Частые короткие вспышки (4 раза в секунду)
+  0B11111110
+};
+
+
 #endif
