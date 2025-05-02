@@ -19,7 +19,7 @@
 #define WIFI_ENABLE 1
 #define MQTT_ENABLE 1
 
-#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+//define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
 
 #ifdef DEBUG_VERBOSE_MODE_NOMODBUS_OUT
   #define SWAPSERIAL 0
@@ -32,7 +32,7 @@
 
 //if all sensors not present, we use random sensor
 
-#define DS1820_SENSOR_PRESENTS 0
+#define DS1820_SENSOR_PRESENTS 1
 #define BMP280_SENSOR_PRESENTS 0
 #define BH1750_SENSOR_PRESENTS 0
 
@@ -80,7 +80,7 @@ uint32_t get_counter = 0;
 uint led_mode_setup;
 
 uint16_t cbReadHreg(TRegister* reg, uint16_t numregs){
-  digitalWrite(LED_DATA,HIGH);
+  digitalWrite(LED_DATA,!digitalRead(LED_DATA));
   return reg->value;
 }
 
@@ -258,7 +258,7 @@ void setup() {
 
 
   led_mode_setup=0; //finish setup blinking
-
+  ticker.attach(1,tickf); //set blinking function tickf to 1sec
   
 }
 
@@ -282,6 +282,7 @@ void loop() {
   mbus_obj.task(); // слушаем модбас
   //if (client.connected()) client.loop();
   mb_dev->supply_loop();
+  //mbsensor->print_mqtt();
   
   //yield();   // отпускаем для обработки Wi-Fi
   
@@ -291,9 +292,13 @@ void loop() {
 void tickf(){
   if(led_mode_setup) {
     digitalWrite(LED_DATA, !digitalRead(LED_DATA));
+  }else if (WIFI_ENABLE && MQTT_ENABLE && publisher_mqtt){
+    if (!publisher_mqtt->is_connected()){
+      digitalWrite(LED_DATA, !digitalRead(LED_DATA));
+    }
   }else{
   //digitalWrite(LED_DATA, !digitalRead(LED_DATA));
-    digitalWrite(LED_DATA, LOW);
+    digitalWrite(LED_DATA, HIGH);
   }
 }
 
