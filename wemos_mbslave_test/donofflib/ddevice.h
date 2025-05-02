@@ -29,7 +29,6 @@ class DDevice: public DBase {
     uint modbus_enabled=1;
 
     String reasonStr = "";
-    uint8_t  blink_loop = 0;
     uint current_blink_type = 0;
 
 
@@ -273,22 +272,6 @@ class DDevice: public DBase {
       }
     };
 
-    void virtual sync_blink_mode() {
-      
-        if(pub->is_connected()) {
-          set_blink(BL_CONNECTED_OFF);
-          return;
-        } 
-        else {
-          set_blink(BL_OFFLINE_OFF);
-          return;
-        } 
-    };
-
-    void set_blink(uint _current_blink_type ) {
-      current_blink_type = _current_blink_type;
-    };
-
     void virtual service_loop() {
 
       if(DEVICE_VERBOSE && mqtt_enabled) 
@@ -310,8 +293,7 @@ class DDevice: public DBase {
         pub->publish_vsensor(mbsensor);
       }   
 
-      sync_blink_mode();
-   
+       
     };
 
    

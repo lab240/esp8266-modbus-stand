@@ -3,6 +3,8 @@
 
 
 #include "../donofflib/dbase.h"
+#include "dbcommands.h"
+#include "dbsettings.h"
 
 #define DEFAULT_NUM_TRYES 3   //waiting command pause
 #define SKIP_CHAR 'C'  //char ti skip waiting command

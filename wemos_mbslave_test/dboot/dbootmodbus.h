@@ -113,6 +113,7 @@ public:
         _s->mb_serial_settings_num=NSERIAL_8E1;
         was_corrected=1;
         }
+        
         if(was_corrected) return 1;
         return 0;
 };

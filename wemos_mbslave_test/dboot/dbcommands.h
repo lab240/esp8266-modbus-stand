@@ -1,5 +1,5 @@
-#ifndef __commands__
-#define __commands__
+#ifndef __dbcommands__
+#define __dbcommands__
 
 #define CMD_SET_ADDRESS "seta"
 #define CMD_SET_INT_REGS_AMOUNT "setr"
@@ -20,15 +20,5 @@
 #define CMD_MQTT_SERVER "mqttserver"
 #define CMD_MQTT_PORT "mqttport"
 #define CMD_MQTT_DEV "mqttdev"
-
-//publisher commands
-
-#define C_HOLDREG "hregs"
-#define C_COILS "coils"
-#define C_MBADDRESS "mbaddr"
-#define C_SERIALPORT "serial"
-#define C_SERIAL_BAUDRATE "sbaud"
-#define C_SERIAL_SETTINGS "sparams"
-
 
 #endif

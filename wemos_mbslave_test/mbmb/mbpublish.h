@@ -1,7 +1,7 @@
 #ifndef __mbpublish1__
 #define __mbpublish1__
 
-#include "mbcommands.h"
+#include "mpubcommands.h"
 #include "mbsettings.h"
 #include "../donofflib/dpublishmqtt.h"
 

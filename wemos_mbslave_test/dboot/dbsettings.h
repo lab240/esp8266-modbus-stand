@@ -1,8 +1,5 @@
-#ifndef __mbsettings__
-#define __mbsettings__
-
-#include "Arduino.h"
-#include "../donofflib/dsettings.h"
+#ifndef __dbsettings__
+#define __dbsettings__
 
 #define NUM_TRY 10   //waiting command pause
 
