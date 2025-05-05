@@ -7,8 +7,8 @@
 #include "dbsettings.h"
 
 #define DEFAULT_NUM_TRYES 3   //waiting command pause
-#define SKIP_CHAR 'C'  //char ti skip waiting command
-#define EXT_CHAR 'E'
+#define SKIP_CHAR 'C'  //char to skip waiting command
+#define EXT_CHAR 'E'   //char to icrase time for waiting command
 #define EXTRA_NUM 100
 
 class DBootA : public DBase
