@@ -3,6 +3,7 @@
 
 #define NUM_TRY 10   //waiting command pause
 
+
 //default values
 #define DEFAULT_ADDRESS 126           //default modbus address
 #define DEFAULT_INT_REGS 100           //default hold regs

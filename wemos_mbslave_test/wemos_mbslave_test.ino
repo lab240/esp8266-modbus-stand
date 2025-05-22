@@ -144,7 +144,7 @@ void setup() {
   dprogramm.debug(DSENTER,0);
   dboot->print_welcome_help();
  
-  dprogramm.debug(DSMAIN, "--------------- Enter setup mode, to brake setup mode, send space<enter> or C<enter> -------------");
+  dprogramm.debug(DSMAIN, "--------------- Enter setup mode: [setup mode - 'E'<enter>], [break setup mode - 'C'<enter>] -------------");
   dprogramm.debug(DSENTER,0);
  
   //loop of setup boot
