@@ -16,8 +16,8 @@
 #include "vmsensor/vmsensor-random.h" 
 
 #define DEBUG 1
-#define WIFI_ENABLE 1
-#define MQTT_ENABLE 1
+#define WIFI_ENABLE 0
+#define MQTT_ENABLE 0
 
 //#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
 
@@ -32,7 +32,7 @@
 
 //if all sensors not present, we use random sensor
 
-#define DS1820_SENSOR_PRESENTS 1
+#define DS1820_SENSOR_PRESENTS 0
 #define BMP280_SENSOR_PRESENTS 0
 #define BH1750_SENSOR_PRESENTS 0
 
@@ -184,7 +184,8 @@ void setup() {
     dprogramm.debug(DSMAIN, "Setting silent mode, bye bye console ");
     Serial.flush();
     delay(200);
-    Serial.begin( _s->mb_serial_baudrate, serial_settings);  
+    //Serial.begin( _s->mb_serial_baudrate, serial_settings);  
+    Serial.begin( _s->mb_serial_baudrate, dprogramm.get_serial_setings_num(_s->mb_serial_settings_num) );  
     digitalWrite(POWER_PIN,HIGH);
     Serial.swap();    
   }else{
@@ -194,7 +195,8 @@ void setup() {
       Serial.flush();
       Serial.end();
       delay(200);
-      Serial.begin( _s->mb_serial_baudrate, serial_settings);  
+      Serial.begin( _s->mb_serial_baudrate, dprogramm.get_serial_setings_num(_s->mb_serial_settings_num) ); 
+      //Serial.begin( _s->mb_serial_baudrate, serial_settings);  
     }
     digitalWrite(POWER_PIN,HIGH);
   }
