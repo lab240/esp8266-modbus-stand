@@ -32,7 +32,7 @@
 
 //if all sensors not present, we use random sensor
 
-#define DS1820_SENSOR_PRESENTS 0
+#define DS1820_SENSOR_PRESENTS 1
 #define BMP280_SENSOR_PRESENTS 0
 #define BH1750_SENSOR_PRESENTS 0
 
