@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 #include <Arduino.h>
-#include "vmsensorvars.h"
+#include "vmsettings.h"
 
 
 // A base class for sensors that store register values by name and expose them via MQTT topics.
@@ -59,7 +59,7 @@ public:
     virtual void sensor_loop() = 0;
 
     // should return: 0 - ok, -1 - no sensor, -2 - no data
-    virtual int no_sensor_check(float val) = 0;
+    //virtual int no_sensor_check(float val) = 0;
 
 
     int cdebug(const String& source, const String& message) {
@@ -142,7 +142,9 @@ public:
             return;
         }
 
-        int check = no_sensor_check(value);
+        uint16_t multiplier=1;
+
+       /* int check = no_sensor_check(value);
         if (check == NO_SENSOR_STATE || init_ok==0) {
             sensor_registers[name] = NO_SENSOR_VALUE;
         } else if (check == NO_SENSOR_DATA_STATE) {
@@ -151,6 +153,22 @@ public:
             uint16_t multiplier = register_multipliers[name];
             sensor_registers[name] = static_cast<int32_t>(value * multiplier);
         }
+         */
+
+         //cdebug("VSENSOR", "NAME="+name+" VALUE="+String(value));
+         if( init_ok==0 ) {
+            /* init error, check init() code*/
+            value = NO_SENSOR_VALUE;
+            multiplier=1;
+         }
+         else if(value == NO_SENSOR_VALUE || value ==  NO_SENSOR_DATA_VALUE){
+             multiplier=1;
+         }
+         else {
+            multiplier = register_multipliers[name];
+         }
+         //cdebug("VSENSOR", "NAME="+name+" VALUE="+String(value)+"  M="+String(multiplier)+" INIT_OK="+String(init_ok));
+         sensor_registers[name] = static_cast<int32_t>(value * multiplier);
     }
 
 

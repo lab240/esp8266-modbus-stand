@@ -41,11 +41,12 @@ public:
         update_topics();
         fill_holder_registers();
     }
-
+/*
     int no_sensor_check(float val) override {
         // No error checking needed for random data
         return 0;
     }
+*/
 };
 
 

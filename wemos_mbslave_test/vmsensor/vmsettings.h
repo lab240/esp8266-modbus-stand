@@ -1,5 +1,5 @@
-#ifndef vmsensorvars
-#define vmsensorvars
+#ifndef vmsettings
+#define vmsettings
 
 
 
@@ -20,11 +20,11 @@ enum sensor_types {
 #define MULTIPLIER_LUX 100
 
 
-const char* TEMP_REGISTER_NAME="temp";
-const char* PRESSURE_REGISTER_NAME="pressure";
+//const char* TEMP_REGISTER_NAME="temp";
+//const char* PRESSURE_REGISTER_NAME="pressure";
 
-#define NO_SENSOR_STATE -1
-#define NO_SENSOR_DATA_STATE  -2
+//#define NO_SENSOR_STATE -1
+//#define NO_SENSOR_DATA_STATE  -2
 
 // Flag definitions
 #define DISABLE                      0

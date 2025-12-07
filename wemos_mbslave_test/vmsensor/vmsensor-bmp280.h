@@ -22,8 +22,8 @@ public:
      VmSensorBMP280(int id, uint type=BMP280_TYPE)
         : VmSensora(id, BMP280_TYPE, {BMP280_REG0_TEMP_NAME, BMP280_REG1_PRESSURE_NAME}, BMP280_REG0_TEMP_NAME, String(BMP280_SENSOR_NAME) + "_"+ String(id)) {
 
-            set_register_multiplier(TEMP_REGISTER_NAME, MULTIPLIER_TEMP); // e.g., 23.45°C → 2345
-            set_register_multiplier(PRESSURE_REGISTER_NAME, MULTIPLIER_PRESSURE);      // Pressure in Pascals (int)
+            set_register_multiplier(BMP280_REG0_TEMP_NAME, MULTIPLIER_TEMP); // e.g., 23.45°C → 2345
+            set_register_multiplier(BMP280_REG1_PRESSURE_NAME, MULTIPLIER_PRESSURE);      // Pressure in Pascals (int)
         }
 
       void init() override{
@@ -38,6 +38,7 @@ public:
         } else {
             init_ok = 1; // Initialization successful
         }
+        init_ok = 1; //temprorary
         cdebug("INIT_OK", String(init_ok));
     }
 
@@ -45,22 +46,25 @@ public:
         float temp = bmp.readTemperature();      // В °C
         float pressure = bmp.readPressure();     // В Па
 
-        // if( isnan(temp)) temp=176;
-        // if(isnan(pressure)) pressure=176;
         //cdebug("BMP280", "TEMP="+ String(temp)+"   PRESS="+String(pressure));
+        if(isnan(temp)){
+             write_sensor_register(BMP280_REG0_TEMP_NAME, NO_SENSOR_DATA_VALUE);  
+             //cdebug("BMP280", "TEMP="+ String(temp)+"   PRESS="+String(pressure));
+        }
+        else write_sensor_register(BMP280_REG0_TEMP_NAME, temp);
 
-        write_sensor_register(BMP280_REG0_TEMP_NAME, temp);
-        write_sensor_register(BMP280_REG1_PRESSURE_NAME, pressure);
+        if(isnan(pressure)) write_sensor_register(BMP280_REG1_PRESSURE_NAME, NO_SENSOR_DATA_VALUE);  
+        else write_sensor_register(BMP280_REG1_PRESSURE_NAME, pressure);
 
         update_topics();
         fill_holder_registers();
     }
-
+/*
     int no_sensor_check(float val) override {
       if(isnan(val))return NO_SENSOR_DATA_STATE;
       return 0;        
     }
-
+*/
 };
 
 #endif

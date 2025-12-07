@@ -32,6 +32,7 @@ public:
 
         // Fill constant values into holder_registers (ID and type)
         VmSensora::init();
+        init_ok=1;
     }
 
     void sensor_loop() override {
@@ -42,13 +43,16 @@ public:
         update_topics();
     }
 
-
+/*
     int no_sensor_check(float val) override {
         // BH1750 returns < 0.0 if sensor is not responding or not connected
         if (val == -2.00) return NO_SENSOR_DATA_STATE;          // No data
         if (val == -1.00) return NO_SENSOR_STATE;   // no sensor
         return 0;                        // O
     }
+*/
 };
+
+
 
 #endif

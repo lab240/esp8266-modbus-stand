@@ -9,8 +9,8 @@
 #include "vmsensora.h"
 
 const  uint8_t DS1820_PIN =  D2;
-const char* DS1280_SENSOR_NAME="ds1820";
-const char* DS1280_REG0_NAME="lux";
+const char* DS1820_SENSOR_NAME="ds1820";
+const char* DS180_REG0_TEMP_NAME="temp";
 
 
 #define NO_DS1820_SENSOR_VAL -128
@@ -26,18 +26,17 @@ private:
 
 public:
     VmSensorDS1820(int id, uint8_t pin = DS1820_PIN)
-        : VmSensora(id, TEMPERATURE_SENSOR, {DS1280_REG0_NAME}, DS1280_REG0_NAME, String(DS1280_SENSOR_NAME) + "_"+ String(id)),
+        : VmSensora(id, TEMPERATURE_SENSOR, {DS180_REG0_TEMP_NAME}, DS180_REG0_TEMP_NAME, String(DS1820_SENSOR_NAME) + "_"+ String(id)),
           DS_PIN(pin),
           oneWire(pin),
           ds_sensor(&oneWire) 
     {
-        set_register_multiplier(TEMP_REGISTER_NAME, MULTIPLIER_TEMP); // e.g., 23.45°C → 2345
+        set_register_multiplier(DS180_REG0_TEMP_NAME, MULTIPLIER_TEMP); // e.g., 23.45°C → 2345
     }
 
     void init() override{
 
         VmSensora::init(); // Adds device ID and sensor type to holder_registers
-        init_ok = 0;
         cdebug("DS1820", "DS1820 starting init");
 
         ds_sensor.begin();
@@ -49,7 +48,7 @@ public:
         } else {
             cdebug("DS1820", "Sensor address NOT found");
         }
-
+        init_ok = 1;
         cdebug("INIT_OK", String(init_ok));
     }
 
@@ -57,12 +56,17 @@ public:
         ds_sensor.requestTemperatures();
 
         float temp = ds_sensor.getTempC(tempDeviceAddress);
-        write_sensor_register(TEMP_REGISTER_NAME, temp);
+
+        //normalize fake senxor values
+        if (temp == NO_DS1820_SENSOR_DATA_VAL || temp == DS1820_FAKE_VAL) temp=NO_SENSOR_DATA_VALUE;
+        if (temp == NO_DS1820_SENSOR_VAL) temp=NO_SENSOR_VALUE;
+
+        write_sensor_register(DS180_REG0_TEMP_NAME, temp);
 
         update_topics();
         fill_holder_registers();
     }
-
+/*
     int no_sensor_check(float val) override {
         if (val == NO_DS1820_SENSOR_DATA_VAL || val == DS1820_FAKE_VAL)
             return NO_SENSOR_DATA_STATE;
@@ -70,6 +74,7 @@ public:
             return NO_SENSOR_STATE;
         return 0;
     }
+*/
 };
 
 #endif
