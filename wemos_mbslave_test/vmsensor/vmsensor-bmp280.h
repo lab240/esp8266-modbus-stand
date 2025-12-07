@@ -4,10 +4,15 @@
 #include <Adafruit_BMP280.h> 
 #include "vmsensora.h"
 
+
+const char* BMP280_SENSOR_NAME="bmp280";
+const char* BMP280_REG0_TEMP_NAME="temp";
+const char* BMP280_REG1_PRESSURE_NAME="pressure";
+
+
 const uint8_t BMP280_TYPE = 0x60;
 const uint8_t BMP280_I2C_ADDRESS = 0x76;
 const float APRESSURE=1013.25;
-
 
 // Concrete implementation of vector_sensor for BMP280
 class VmSensorBMP280 : public VmSensora {
@@ -15,7 +20,7 @@ private:
     Adafruit_BMP280 bmp;
 public:
      VmSensorBMP280(int id, uint type=BMP280_TYPE)
-        : VmSensora(id, BMP280_TYPE, {TEMP_REGISTER_NAME, PRESSURE_REGISTER_NAME}, TEMP_REGISTER_NAME, "bmp280"+String(BMP280_TYPE)) {
+        : VmSensora(id, BMP280_TYPE, {BMP280_REG0_TEMP_NAME, BMP280_REG1_PRESSURE_NAME}, BMP280_REG0_TEMP_NAME, String(BMP280_SENSOR_NAME) + "_"+ String(id)) {
 
             set_register_multiplier(TEMP_REGISTER_NAME, MULTIPLIER_TEMP); // e.g., 23.45°C → 2345
             set_register_multiplier(PRESSURE_REGISTER_NAME, MULTIPLIER_PRESSURE);      // Pressure in Pascals (int)
@@ -40,16 +45,19 @@ public:
         float temp = bmp.readTemperature();      // В °C
         float pressure = bmp.readPressure();     // В Па
 
-        write_sensor_register(TEMP_REGISTER_NAME, temp);
-        write_sensor_register("pressure", pressure);
+        // if( isnan(temp)) temp=176;
+        // if(isnan(pressure)) pressure=176;
+        //cdebug("BMP280", "TEMP="+ String(temp)+"   PRESS="+String(pressure));
+
+        write_sensor_register(BMP280_REG0_TEMP_NAME, temp);
+        write_sensor_register(BMP280_REG1_PRESSURE_NAME, pressure);
 
         update_topics();
         fill_holder_registers();
     }
 
     int no_sensor_check(float val) override {
-       if (val == 176 || val == 178 || val==177)
-            return NO_SENSOR_DATA_STATE;
+      if(isnan(val))return NO_SENSOR_DATA_STATE;
       return 0;        
     }
 

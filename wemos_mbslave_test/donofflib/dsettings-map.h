@@ -8,7 +8,13 @@
 #define  mb_coilregs_amount      custom_level3
 #define  mb_serial_baudrate      custom_level4
 
+
 #define  mb_serial_settings_num  custom_level_notify1
+#define  mb_sensor_type         custom_level_notify2
+#define  mb_wifi_enable         custom_level_notify3
+#define  mb_mqtt_enable         custom_level_notify4
+#define  mb_swap_serial         nalog_level_notify1
+#define  mb_silent_mode         nalog_level_notify2
 //*******************************************************
 
 

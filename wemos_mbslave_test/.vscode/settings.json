@@ -1,4 +1,5 @@
 {
     "cSpell.language": "en",
-    "cSpell.enabled": false
+    "cSpell.enabled": false,
+    "arduino.buildPath": "/home/dmn/Arduino/build"
 }

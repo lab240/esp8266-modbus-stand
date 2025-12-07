@@ -49,7 +49,8 @@ public:
 
         for (const auto& name : register_names) {
             sensor_registers[name] = 0;
-            mqtt_topics[name] = sensor_name + "-" + name;
+            //mqtt_topics[name] = sensor_name + "-" + name;
+            mqtt_topics[name] = "";
             register_multipliers[name] = 1; // default multiplier is 1
         }
     }

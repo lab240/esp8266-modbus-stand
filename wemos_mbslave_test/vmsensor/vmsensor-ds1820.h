@@ -9,6 +9,9 @@
 #include "vmsensora.h"
 
 const  uint8_t DS1820_PIN =  D2;
+const char* DS1280_SENSOR_NAME="ds1820";
+const char* DS1280_REG0_NAME="lux";
+
 
 #define NO_DS1820_SENSOR_VAL -128
 #define NO_DS1820_SENSOR_DATA_VAL  -127
@@ -23,7 +26,7 @@ private:
 
 public:
     VmSensorDS1820(int id, uint8_t pin = DS1820_PIN)
-        : VmSensora(id, TEMPERATURE_SENSOR, {TEMP_REGISTER_NAME}, TEMP_REGISTER_NAME, "ds1820_" + String(pin)),
+        : VmSensora(id, TEMPERATURE_SENSOR, {DS1280_REG0_NAME}, DS1280_REG0_NAME, String(DS1280_SENSOR_NAME) + "_"+ String(id)),
           DS_PIN(pin),
           oneWire(pin),
           ds_sensor(&oneWire) 

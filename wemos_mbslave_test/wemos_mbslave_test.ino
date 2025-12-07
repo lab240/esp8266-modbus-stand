@@ -16,24 +16,24 @@
 #include "vmsensor/vmsensor-random.h" 
 
 #define DEBUG 1
-#define WIFI_ENABLE 0
-#define MQTT_ENABLE 0
+#define WIFI_ENABLE 1
+#define MQTT_ENABLE 1
 
-//#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
+#define DEBUG_VERBOSE_MODE_NOMODBUS_OUT
 
 #ifdef DEBUG_VERBOSE_MODE_NOMODBUS_OUT
   #define SWAPSERIAL 0
   #define SILENT_SERIAL_MODE 0
 #else
   #define SWAPSERIAL 1
-  #define SILENT_SERIAL_MODE 1
+  #define SILENT_SERIAL_MODE 0
 #endif
 
 
 //if all sensors not present, we use random sensor
 
-#define DS1820_SENSOR_PRESENTS 1
-#define BMP280_SENSOR_PRESENTS 0
+#define DS1820_SENSOR_PRESENTS 0
+#define BMP280_SENSOR_PRESENTS 1
 #define BH1750_SENSOR_PRESENTS 0
 
 //#define POWER_PIN D1 //old version
@@ -164,7 +164,7 @@ void setup() {
     struct station_config stationConf;
     wifi_station_get_config (&stationConf);
     dprogramm.debug(DSWIFI,"Try with ssid|pass=|" + String((char*)stationConf.ssid) +"|" + String((char*)stationConf.password)+"|");
-    WiFi.begin();
+    WiFi.begin(String((char*)stationConf.ssid).c_str(),String((char*)stationConf.password).c_str());
     dprogramm.mywifi_try_to_connect();
     ticker.attach(0.25,tickf);
   }

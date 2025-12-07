@@ -5,6 +5,9 @@
 #include <BH1750.h>
 #include "vmsensora.h"
 
+const char* BH1750_SENSOR_NAME="bh1750";
+const char* BH1750_REG0_NAME="lux";
+
 // Concrete implementation of vector_sensor for BH1750 light sensor
 class VmSensorBH1750 : public VmSensora {
 private:
@@ -15,9 +18,9 @@ public:
         : VmSensora(
             id,                  // ID
             LIGTH_SENSOR,       // Sensor type (type ID for BH1750)
-            {"lux"},           // Register name
-            "lux",             // Main register name 
-            "bh1750"    // Sensor name
+            {BH1750_REG0_NAME},           // Register name
+            BH1750_REG0_NAME,             // Main register name 
+            String(BH1750_SENSOR_NAME) + "_"+ String(id)    // Sensor name
         ) {
 
             set_register_multiplier("lux", MULTIPLIER_LUX);

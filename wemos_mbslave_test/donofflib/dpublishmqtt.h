@@ -301,10 +301,11 @@ public:
         for (const auto& topic_pair :  sensor->mqtt_topics) {
             const String& topic = topic_pair.first;
             const String& payload = topic_pair.second;
-            String fulltopic=form_full_topic("/out/sensors/"+topic);
+            String fulltopic=form_full_topic("/out/sensors/"+sensor->get_name()+"/"+topic);
             if (is_connected()){
               _c->publish(fulltopic.c_str(), payload.c_str());
-              //debug("VPUBLISHER", "MQTT OK, topic:<"+fulltopic+">, value:"+ payload);
+              //debug("VPUBLISHER", "NAME="+sensor->get_name()+" FIRST="+topic_pair.first);
+              debug("VPUBLISHER", "MQTT OK, topic:<"+fulltopic+">, value:"+ payload);
             }else{
             //debug("VPUBLISHER", "No Mqtt, topic:"+fulltopic+", value="+ payload);
             }

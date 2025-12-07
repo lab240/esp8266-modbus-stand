@@ -1,6 +1,8 @@
 #ifndef vmsensorrandom
 #define vmsensorrandom
 
+#define SENSOR_NAME "rnd"
+
 #include "vmsensora.h"
 
 class VmSensorRandom : public VmSensora {
@@ -9,14 +11,15 @@ private:
 
 public:
     VmSensorRandom(int id, int num_regs=10)
-        : VmSensora(id, RANDOM_SENSOR_8H, {}, "reg0", "random_sensor_" + String(id)), num_registers(num_regs)
+        : VmSensora(id, RANDOM_SENSOR_8H, {}, "reg0", SENSOR_NAME+ String("_") + String(id)), num_registers(num_regs)
     {
         // Dynamically create num_regs registers: reg0, reg1, ..., regN
         for (int i = 0; i < num_registers; ++i) {
             String regName = "reg" + String(i);
             sensor_registers[regName] = 0;
-            mqtt_topics[regName] = sensor_name + "/" + regName;
+            mqtt_topics[regName] = "";
             register_multipliers[regName] = 1;
+            cdebug("RANDOM_SENSOR","Topic="+mqtt_topics[regName]);
         }
 
         // Set the main register to be the first one (reg0)
