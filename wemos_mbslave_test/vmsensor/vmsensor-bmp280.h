@@ -38,7 +38,7 @@ public:
         } else {
             init_ok = 1; // Initialization successful
         }
-        init_ok = 1; //temprorary
+        //init_ok = 1; //temprorary
         cdebug("INIT_OK", String(init_ok));
     }
 
@@ -53,7 +53,9 @@ public:
         }
         else write_sensor_register(BMP280_REG0_TEMP_NAME, temp);
 
-        if(isnan(pressure)) write_sensor_register(BMP280_REG1_PRESSURE_NAME, NO_SENSOR_DATA_VALUE);  
+        if(isnan(pressure)){
+            write_sensor_register(BMP280_REG1_PRESSURE_NAME, NO_SENSOR_DATA_VALUE);  
+        } 
         else write_sensor_register(BMP280_REG1_PRESSURE_NAME, pressure);
 
         update_topics();

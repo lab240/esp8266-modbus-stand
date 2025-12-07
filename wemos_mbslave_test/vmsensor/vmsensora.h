@@ -93,6 +93,7 @@ public:
         if (sensor_registers.find(name) == sensor_registers.end()) return 0;
         uint16_t multiplier = register_multipliers[name];
         if (multiplier == 0) return 0;
+        if (sensor_registers[name] == NO_SENSOR_VALUE || sensor_registers[name] == NO_SENSOR_DATA_VALUE) multiplier=1;
         return static_cast<float>(sensor_registers[name]) / multiplier;
     }
 
@@ -161,7 +162,7 @@ public:
             value = NO_SENSOR_VALUE;
             multiplier=1;
          }
-         else if(value == NO_SENSOR_VALUE || value ==  NO_SENSOR_DATA_VALUE){
+         else if(int(value) == NO_SENSOR_VALUE || int(value) ==  NO_SENSOR_DATA_VALUE){
              multiplier=1;
          }
          else {
