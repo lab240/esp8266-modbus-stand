@@ -211,7 +211,7 @@ void setup() {
 
   dprogramm.debug(DSMAIN, "Starting sensor");
 
-   if (DS1820_SENSOR_PRESENTS){
+   if (_s->mb_shield_type == 2){
 
     mbsensor=new VmSensorDS1820(_s->mb_modbus_address);
     mbsensor->init();

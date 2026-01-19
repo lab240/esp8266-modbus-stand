@@ -6,6 +6,7 @@
 #define CMD_SET_COIL_REGS_AMOUNT "setc"
 #define CMD_SET_BAUDRATE "setb"
 #define CMD_SET_PORT_SETTINGS "setp"
+#define CMD_SET_SHIELD_TYPE "sensor"
 
 
 #define CMD_HELP "help"

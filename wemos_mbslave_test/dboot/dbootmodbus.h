@@ -26,19 +26,20 @@ public:
    void virtual print_curr_settings() override {
         DBootEspMqtt::print_curr_settings();
  
-        debug(DSHELP, "Mdbus address->"+String(_s->custom_level1), TOUT);
-        debug(DSHELP, "HOLD REGS->"+String(_s->custom_level2), TOUT);
-        debug(DSHELP, "COIL REGS->"+String(_s->custom_level3), TOUT);
-        debug(DSHELP, "BAUDRATE->"+String(_s->custom_level4), TOUT);
-        debug(DSHELP, "PORT SERIAL NUM->"+String(_s->custom_level_notify1), TOUT);
-        debug(DSHELP, "PORT SETTINGS->"+get_serial_settings_string(_s->custom_level_notify1));
+        debug(DSHELP, "Shield_type->"+String(_s->mb_shield_type), TOUT);
+        debug(DSHELP, "Mdbus address->"+String(_s->mb_modbus_address), TOUT);
+        debug(DSHELP, "HOLD REGS->"+String(_s->mb_intregs_amount), TOUT);
+        debug(DSHELP, "COIL REGS->"+String(_s->mb_coilregs_amount), TOUT);
+        debug(DSHELP, "BAUDRATE->"+String(_s->mb_serial_baudrate), TOUT);
+        //debug(DSHELP, "PORT SERIAL NUM->"+String(_s->custom_level_notify1), TOUT);
+        debug(DSHELP, "PORT SETTINGS->"+get_serial_settings_string(_s->mb_serial_settings_num ));
 
     }
 
 
     void virtual print_full_help() override {
         DBootEspMqtt::print_full_help();
-
+        debug(DSHELP, String(CMD_SET_SHIELD_TYPE) + "=<SHIELD TYPE> (1..127), ");
         debug(DSHELP, String(CMD_SET_ADDRESS) + "=<ADDRESS> (1..127), ");
         debug(DSHELP, String(CMD_SET_INT_REGS_AMOUNT) + "=<NUM_INT_REGS>");
         debug(DSHELP, String(CMD_SET_COIL_REGS_AMOUNT) + "=<NUM_COILS>");
@@ -53,7 +54,10 @@ public:
 
         if (cmdStr == CMD_SET_ADDRESS)
              if (set_settings_val_int(cmdStr,valStr,(int*) &_s->mb_modbus_address, 0,MAX_ID)) return 1;
-  
+        
+        if (cmdStr == CMD_SET_SHIELD_TYPE)
+             if (set_settings_val_int(cmdStr,valStr,(int*) &_s->mb_shield_type, 0,MAX_ID)) return 1;
+   
         if (cmdStr == CMD_SET_INT_REGS_AMOUNT)
             if (set_settings_val_int(cmdStr,valStr,(int*) &_s->mb_intregs_amount, 4,MAX_INT_REGS)) return 1;
         
@@ -75,6 +79,7 @@ public:
         WMSettings defaults;
         *_s = defaults;
         _s->mb_modbus_address=DEFAULT_ADDRESS; //по умолчанию пусть будет 126й адрес
+        _s->mb_shield_type=DEFAULT_SHIELD_TYPE;
         _s->mb_intregs_amount=DEFAULT_INT_REGS;
         _s->mb_coilregs_amount=DEFAULT_COIL_REGS;
         _s->mb_serial_baudrate=DEFAULT_MB_RATE;
@@ -88,10 +93,15 @@ public:
 
     int virtual correction_to_default_if_need(){
         int was_corrected=0;
-        if(_s->mb_modbus_address>MAX_ID) {
+        if(_s->mb_modbus_address < 0 || _s->mb_modbus_address>MAX_ID) {
         debug(DSEEPROM, "Modbus address is corrected to default", TOUT);
         _s->mb_modbus_address=DEFAULT_ADDRESS;
         was_corrected=1;
+        }
+        if(_s->mb_shield_type < 0 || _s->mb_shield_type>MAX_ID) {
+            debug(DSEEPROM, "Sensor type is corrected to default", TOUT);
+            _s->mb_shield_type=DEFAULT_SHIELD_TYPE;
+            was_corrected=1;
         }
         if(_s->mb_intregs_amount<MIN_INT_REGS || _s->mb_intregs_amount>MAX_INT_REGS) {
         debug(DSEEPROM, "Int Regs amount is corrected to default", TOUT);

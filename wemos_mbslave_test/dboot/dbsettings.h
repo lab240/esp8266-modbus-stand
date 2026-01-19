@@ -6,6 +6,7 @@
 
 //default values
 #define DEFAULT_ADDRESS 126           //default modbus address
+#define DEFAULT_SHILED_TYPE 0          //default shield type is NO_SHIELD, RANDOM 10 regs
 #define DEFAULT_INT_REGS 100           //default hold regs
 #define DEFAULT_COIL_REGS 100         //default coil regs
 
@@ -24,6 +25,11 @@
 #define MIN_BAUDRATE 1200
 
 #define MAX_SERIAL_VAR_NUM 62
+
+#define SHIELD_TYPE_NO_SHIELD 0
+#define SHIELD_TYPE_DS1820 1
+#define SHIELD_TYPE_BMP280 2
+#define SHIELD_TYPE_BH1750 3
 //*****************************************************
 
 #endif
