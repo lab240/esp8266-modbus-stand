@@ -9,6 +9,7 @@
 #define DEFAULT_SHILED_TYPE 0          //default shield type is NO_SHIELD, RANDOM 10 regs
 #define DEFAULT_INT_REGS 100           //default hold regs
 #define DEFAULT_COIL_REGS 100         //default coil regs
+#define DEFAULT_SHIELD_TYPE 1
 
 #define DEFAULT_MB_RATE 115200        // default baudrate
 #define DEFAULT_MB_FC SERIAL_8E1      // dfault  serial settings
